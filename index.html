@@ -94,6 +94,15 @@ textarea{font:inherit;font-size:17px;width:100%;min-height:96px;border:2px solid
 .map ol{margin:0;padding-left:1.3em}
 .map li{margin:4px 0}
 .map .br{border-left:3px solid var(--line);padding-left:10px;margin:4px 0 4px 4px;color:var(--sub)}
+.flowwrap{display:flex;flex-direction:column;gap:14px}
+.sec{display:flex;flex-direction:column;gap:16px;padding-top:6px}
+.sec,.flowwrap>.ans{scroll-margin-top:84px}
+.sec+.sec{border-top:1px dashed var(--line);padding-top:20px}
+.btn.stepper{flex:1;background:var(--bg);border-color:var(--line);color:var(--sub);font-weight:400;font-size:14px}
+.steps{display:flex;gap:6px;justify-content:center;margin-bottom:4px}
+.steps i{width:28px;height:6px;border-radius:3px;background:var(--line)}
+.steps i.on{background:var(--accent)}
+.steps i.cur{background:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
 .inline-confirm{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--accent-soft);border-radius:12px;padding:10px 12px;font-size:15px}
 @media (prefers-reduced-motion:no-preference){main{animation:in .2s ease-out}.flash{animation:in .3s ease-out}@keyframes in{from{opacity:.4;transform:translateY(6px)}to{opacity:1;transform:none}}}
 </style>
@@ -139,13 +148,13 @@ const QS=[
  {q:"相続のことを、家族と話したことはありますか？",short:"家族と話したこと",a:["よく話す","少しだけ","ない","わからない"]}
 ];
 const KEY="yorisoi-proto-v2";
-const FRESH=()=>({screen:"home",hist:[],worries:[],ans:{},q:0,step:0,open:0,memos:{},flash:"",contact:null,consent:false,err:"",confirmReset:false,returnTo:null});
+const FRESH=()=>({screen:"home",hist:[],worries:[],ans:{},q:0,step:0,open:0,memos:{},flash:"",contact:null,consent:false,err:"",confirmReset:false,returnTo:null,revealed:0,editing:0});
 let S=FRESH();
 try{const raw=localStorage.getItem(KEY);if(raw){const d=JSON.parse(raw);if(d&&d.worries)S={...FRESH(),...d,screen:"home",hist:[],err:"",flash:""};}}catch(e){}
-function persist(){try{localStorage.setItem(KEY,JSON.stringify({worries:S.worries,ans:S.ans,q:S.q,step:S.step,memos:S.memos,lastScreen:S.screen}))}catch(e){}}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify({worries:S.worries,ans:S.ans,q:S.q,step:S.step,memos:S.memos,revealed:S.revealed,editing:S.editing,lastScreen:S.screen}))}catch(e){}}
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const NAMES={home:"はじめの画面",worry:"気になることを選ぶ画面",question:"質問",summary:"整理した内容",route:"あなたの道のり",book:"相談の予約",line:"LINEの案内",map:"画面マップ",self:"自分で調べる"};
+const NAMES={home:"はじめの画面",flow:"質問",worry:"気になることを選ぶ画面",question:"質問",summary:"整理した内容",route:"あなたの道のり",book:"相談の予約",line:"LINEの案内",map:"画面マップ",self:"自分で調べる"};
 function nameOf(h){return h.screen==="question"?`質問${h.q+1}`:NAMES[h.screen]||"前の画面"}
 function go(name,opt){S.hist.push({screen:S.screen,q:S.q});S.screen=name;S.err="";S.confirmReset=false;if(opt&&opt.q!=null)S.q=opt.q;persist();render();window.scrollTo(0,0)}
 function back(){const h=S.hist.pop();if(!h){S.screen="home";}else{S.screen=h.screen;S.q=h.q;}S.err="";persist();render();window.scrollTo(0,0)}
@@ -173,8 +182,11 @@ function answerList(upto,editable){
   QS.forEach((x,i)=>{if(i<upto&&S.ans["q"+i])items.push(`<div class="ans"><span><b>${x.short}</b>${S.ans["q"+i]}</span>${editable?`<button type="button" data-edit="${i}">直す</button>`:""}</div>`)});
   return items.length?`<div class="answers">${items.join("")}</div>`:"";
 }
-function bindEdits(){document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>{const e=b.dataset.edit;S.returnTo=S.screen==="summary"?"summary":null;if(e==="w")go("worry");else go("question",{q:+e})})}
 
+function firstOpen(){if(!S.worries.length||S.revealed<1)return 0;for(let i=0;i<QS.length;i++){if(!S.ans["q"+i])return i+1}return QS.length+1}
+function advance(i){S.revealed=Math.max(S.revealed,i+1);S.editing=firstOpen();S.revealed=Math.max(S.revealed,S.editing);S.err="";persist();V.flow();scrollToSec(S.editing)}
+function scrollToSec(i){requestAnimationFrame(()=>{const el=document.getElementById("sec"+i);if(!el)return;const rm=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;el.scrollIntoView({behavior:rm?"auto":"smooth",block:"start"})})}
+function keep(){}
 const V={
 home(){
   const has=S.worries.length>0;
@@ -190,59 +202,55 @@ home(){
   if($("reset"))$("reset").onclick=()=>{S.confirmReset=true;V.home()};
   if($("rsY"))$("rsY").onclick=()=>{S={...FRESH()};try{localStorage.removeItem(KEY)}catch(e){};render()};
   if($("rsN"))$("rsN").onclick=()=>{S.confirmReset=false;V.home()};
-  const resume=()=>{if(Object.keys(S.ans).length<QS.length){S.q=Object.keys(S.ans).length;go("question")}else go("route")};
-  bar(has?[{id:"start",label:"続きから始める",cls:"primary",on:resume}]:[{id:"start",label:"寄り添いガイドで始める",cls:"primary",on:()=>go("worry")}]);
+  const resume=()=>{const f=firstOpen();if(f<=QS.length){S.editing=f;go("flow");scrollToSec(f)}else go("route")};
+  bar(has?[{id:"start",label:"続きから始める",cls:"primary",on:resume}]:[{id:"start",label:"寄り添いガイドで始める",cls:"primary",on:()=>{S.editing=0;S.revealed=0;go("flow")}}]);
 },
 self(){
   $("screen").innerHTML=`<h1>自分で調べるモード</h1><p class="lead">これまでどおりの「やることリスト」と「診断」を使えます。</p><div class="card small">試作品では、この先は既存のそうぞくガイドの画面を想定しています。</div>`;
   bar([{id:"b",label:backLabel(),cls:"back",on:back}]);
 },
-worry(){
-  $("screen").innerHTML=`
-   <p class="qno">はじめに</p>
-   <h1>いま、気になっていることは<br>どれですか？</h1>
-   <p class="lead">いくつ選んでも大丈夫です。一番気になるものを先に選んでください。</p>
-   ${S.err?`<p class="err" role="alert">${S.err}</p>`:""}
-   <div class="choice">${WORRIES.map(w=>{const i=S.worries.indexOf(w.id);return `<button type="button" class="opt" aria-pressed="${i>=0}" data-id="${w.id}"><span class="box">${i>=0?i+1:""}</span><span>${w.label}</span></button>`}).join("")}</div>
-   <p class="small">どれにも当てはまらない、よく分からないときは、右上の「担当者に相談」から聞けます。</p>
-   ${SAVE()}`;
-  document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{const id=b.dataset.id;const i=S.worries.indexOf(id);i>=0?S.worries.splice(i,1):S.worries.push(id);S.err="";persist();V.worry()});
-  bar([{id:"b",label:backLabel(),cls:"back",on:back},{id:"n",label:S.returnTo==="summary"?"直した内容で整理する":"次へ",cls:"primary",dis:!S.worries.length,on:()=>{
-    if(!S.worries.length){S.err="1つ選んでください。";V.worry();return}
-    if(S.returnTo==="summary"){S.returnTo=null;go("summary");return}
-    go("question",{q:0})}}],"選んだあとで直すこともできます");
-},
-question(){
-  const it=QS[S.q];const cur=S.ans["q"+S.q];
-  $("screen").innerHTML=`
-   <div class="prog" aria-hidden="true">${QS.map((_,i)=>`<i class="${i<=S.q?"on":""}"></i>`).join("")}</div>
-   <p class="qno">質問 ${S.q+1} / ${QS.length}</p>
-   <h1>${it.q}</h1>
-   ${S.err?`<p class="err" role="alert">${S.err}</p>`:""}
-   <div class="choice">${it.a.map(a=>`<button type="button" class="opt round" aria-pressed="${cur===a}" data-a="${esc(a)}"><span class="box">●</span><span>${a}</span></button>`).join("")}</div>
-   ${S.q>0||S.worries.length?`<details><summary class="small" style="cursor:pointer;min-height:44px">これまでの答えを見る・直す</summary><div style="margin-top:8px">${answerList(S.q,true)}</div></details>`:""}
-   ${SAVE()}`;
-  document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{S.ans["q"+S.q]=b.dataset.a;S.err="";persist();V.question()});
-  bindEdits();
-  const last=S.q===QS.length-1;
-  bar([{id:"b",label:backLabel(),cls:"back",on:back},{id:"n",label:S.returnTo==="summary"?"直した内容で整理する":(last?"答え終わった":"次へ"),cls:"primary",dis:!cur,on:()=>{
-    if(!S.ans["q"+S.q]){S.err="1つ選んでください。「わからない」でも進めます。";V.question();return}
-    if(S.returnTo==="summary"){S.returnTo=null;go("summary");return}
-    if(!last)go("question",{q:S.q+1});else go("summary")}}]);
-},
-summary(){
-  const main=wById(S.worries[0]);const others=S.worries.slice(1).map(wById);const r=route();
-  $("screen").innerHTML=`
-   <p class="qno">お話を整理しました</p>
-   <h1>いちばん気になっているのは<br>「${main.short}」ですね</h1>
-   <div class="card quote"><p>${S.ans.q2==="ない"?"まだ家族と話したことがないとのこと。最初から大きなことをしなくて大丈夫です。":"答えていただいた内容をもとに、無理のない順番を考えました。"}</p></div>
-   <div class="card" style="display:flex;gap:16px;align-items:center"><span class="count">${r.length}</span><p>あなたがやることは<b>${r.length}つ</b>です。<br><span class="small">まずは最初の1つだけ。${r[0][2]}ほどで終わります。</span></p></div>
-   ${others.length?`<p class="small">「${others.map(o=>o.short).join("」「")}」も、この準備が終わったらご案内します。</p>`:""}
-   <h2>答えた内容</h2>
-   ${answerList(QS.length,true)}
-   <p class="small">直すと、道のりも作り直します。</p>`;
-  bindEdits();
-  bar([{id:"b",label:backLabel(),cls:"back",on:back},{id:"n",label:"道のりを見る",cls:"primary",on:()=>{S.open=S.step;go("route")}}]);
+flow(){
+  const r=route();const total=QS.length+1;
+  const done=i=>i===0?S.worries.length>0&&S.revealed>0:!!S.ans["q"+(i-1)];
+  const blocks=[];
+  for(let i=0;i<=Math.min(S.revealed,total);i++){
+    const open=i===S.editing;
+    if(i===total){
+      const main=wById(S.worries[0]);const others=S.worries.slice(1).map(wById);
+      blocks.push(`<section class="sec" id="sec${i}"><p class="qno">お話を整理しました</p>
+        <h1>いちばん気になっているのは<br>「${main.short}」ですね</h1>
+        <div class="card quote"><p>${S.ans.q2==="ない"?"まだ家族と話したことがないとのこと。最初から大きなことをしなくて大丈夫です。":"答えていただいた内容をもとに、無理のない順番を考えました。"}</p></div>
+        <div class="card" style="display:flex;gap:16px;align-items:center"><span class="count">${r.length}</span><p>あなたがやることは<b>${r.length}つ</b>です。<br><span class="small">まずは最初の1つだけ。${r[0][2]}ほどで終わります。</span></p></div>
+        ${others.length?`<p class="small">「${others.map(o=>o.short).join("」「")}」も、この準備が終わったらご案内します。</p>`:""}
+        <p class="small">上の答えは「直す」から変えられます。直すと道のりも作り直します。</p></section>`);
+      continue;
+    }
+    if(i===0){
+      if(open){
+        blocks.push(`<section class="sec" id="sec0"><p class="qno">はじめに</p><h1>いま、気になっていることは<br>どれですか？</h1>
+          <p class="lead">いくつ選んでも大丈夫です。一番気になるものを先に選んでください。</p>
+          ${S.err?`<p class="err" role="alert">${S.err}</p>`:""}
+          <div class="choice">${WORRIES.map(w=>{const k=S.worries.indexOf(w.id);return `<button type="button" class="opt" aria-pressed="${k>=0}" data-w="${w.id}"><span class="box">${k>=0?k+1:""}</span><span>${w.label}</span></button>`}).join("")}</div>
+          <p class="small">どれにも当てはまらないときは、右上の「担当者に相談」から聞けます。</p>
+          <button type="button" class="btn primary" id="wOk" ${S.worries.length?"":'aria-disabled="true"'}>これで決める</button></section>`);
+      }else blocks.push(`<div class="ans" id="sec0"><span><b>気になること</b>${S.worries.map(id=>wById(id).short).join("、")}</span><button type="button" data-edit="0">直す</button></div>`);
+      continue;
+    }
+    const it=QS[i-1];const cur=S.ans["q"+(i-1)];
+    if(open){
+      blocks.push(`<section class="sec" id="sec${i}"><p class="qno">質問 ${i} / ${QS.length}</p><h1>${it.q}</h1>
+        <div class="choice">${it.a.map(a=>`<button type="button" class="opt round" aria-pressed="${cur===a}" data-q="${i-1}" data-a="${esc(a)}"><span class="box">●</span><span>${a}</span></button>`).join("")}</div></section>`);
+    }else blocks.push(`<div class="ans" id="sec${i}"><span><b>${it.short}</b>${cur}</span><button type="button" data-edit="${i}">直す</button></div>`);
+  }
+  $("screen").innerHTML=`<div class="flowwrap">${blocks.join("")}</div>${SAVE()}`;
+  document.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{const id=b.dataset.w;const k=S.worries.indexOf(id);k>=0?S.worries.splice(k,1):S.worries.push(id);S.err="";persist();V.flow();keep("sec0")});
+  if($("wOk"))$("wOk").onclick=()=>{if(!S.worries.length){S.err="1つ選んでください。";V.flow();return}advance(0)};
+  document.querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>{S.ans["q"+b.dataset.q]=b.dataset.a;persist();advance(+b.dataset.q+1)});
+  document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>{S.editing=+b.dataset.edit;V.flow();scrollToSec(S.editing)});
+  const step=Math.min(S.editing,total);
+  const dots=`<span class="steps" aria-label="${step<total?"質問の進み具合":"質問はすべて終わりました"}">${Array.from({length:total},(_,k)=>`<i class="${k<S.revealed?"on":""}${k===step?" cur":""}"></i>`).join("")}</span>`;
+  const complete=S.revealed>total-1;
+  bar([{id:"b",label:backLabel(),cls:"back",on:back},complete?{id:"n",label:"道のりを見る",cls:"primary",on:()=>{S.open=S.step;go("route")}}:{id:"n",label:`${dots}<small>${step===0?"気になることを選んでください":step<total?`質問 ${step} / ${QS.length}`:""}</small>`,cls:"stepper",on:()=>scrollToSec(S.editing)}]);
 },
 route(){
   const r=route();const allDone=S.step>=r.length;
@@ -316,15 +324,16 @@ map(){
    <div class="card map"><ol>
     <li>はじめの画面（続きがあれば「続きから始める」）
       <div class="br">分岐：自分で調べる → 既存のやることリスト（変更なし）</div></li>
-    <li>気になることを選ぶ（複数可。最初に選んだものが道のりを決める）</li>
-    <li>質問1〜3（1画面1問。いつでも前の答えを直せる）</li>
-    <li>お話を整理しました（答えの一覧から直せる → 直すと道のりを作り直す）</li>
+    <li>質問のページ（縦に続く1ページ）
+      <div class="br">気になることを選ぶ（複数可。最初に選んだものが道のりを決める）→「これで決める」</div>
+      <div class="br">質問1〜3：答えると1行にたたまれ、次の質問が下に現れて自動でスクロール</div>
+      <div class="br">最後に「お話を整理しました」が現れる。たたんだ答えは「直す」でその場で開き直せる</div></li>
     <li>あなたの道のり（4ステップ。各ステップを開くと中身・メモ・「できた」）
       <div class="br">各ステップから：LINEで続きを受け取る</div>
       <div class="br">最後のステップ・下のボタン：担当者に相談</div></li>
     <li>担当者に相談（伝わる内容を確認 → 方法を選ぶ → 同意 → 予約完了）</li>
    </ol>
-   <p style="margin-top:10px">右上の「担当者に相談」は、どの画面からでも 6 に進めます。</p></div>
+   <p style="margin-top:10px">右上の「担当者に相談」は、どの画面からでも 4 に進めます。</p></div>
    <div class="card map"><p style="font-weight:700">気になること → 道のり（4ステップ）</p>
     ${WORRIES.map(w=>`<p style="margin-top:8px"><b>${w.label}</b></p><ol>${ROUTES[w.id].map(s=>`<li>${plain(s[0])}</li>`).join("")}</ol>`).join("")}
    </div>`;
