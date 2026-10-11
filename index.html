@@ -71,7 +71,7 @@ button:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px so
 .gloss b{display:block;font-size:14px;color:var(--sub)}
 .gloss{display:block;background:var(--note);border:1px solid var(--note-line);border-radius:10px;padding:8px 12px;margin:6px 0;font-size:15px;color:var(--fg)}
 .road{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
-.road>li{display:grid;grid-template-columns:34px minmax(0,1fr);column-gap:12px;position:relative;padding-bottom:14px}
+.road>li{scroll-margin-top:84px;display:grid;grid-template-columns:34px minmax(0,1fr);column-gap:12px;position:relative;padding-bottom:14px}
 .road>li::before{content:"";position:absolute;left:16px;top:34px;bottom:0;width:3px;background:var(--line)}
 .road>li:last-child::before{display:none}
 .road>li.done::before{background:var(--ok)}
@@ -82,6 +82,8 @@ button:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px so
 .acc b{display:block}
 .acc .chev{flex:none;color:var(--accent-ink);font-size:13px;margin-top:2px;border:1px solid var(--line);border-radius:999px;padding:4px 10px;background:var(--card);white-space:nowrap}
 .now .acc b{color:var(--accent-ink)}
+.panel.later{background:var(--bg);border-style:dashed}
+.acc{cursor:default}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:6px;display:flex;flex-direction:column;gap:12px}
 .now .panel{border:2px solid var(--accent)}
 textarea{font:inherit;font-size:17px;width:100%;min-height:96px;border:2px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--bg);color:var(--fg);resize:vertical}
@@ -196,7 +198,7 @@ function answerList(upto,editable){
 
 function firstOpen(){if(!S.worries.length||S.revealed<1)return 0;for(let i=0;i<QS.length;i++){if(!S.ans["q"+i])return i+1}return QS.length+1}
 const RM=()=>!!(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-function advance(i){S.revealed=Math.max(S.revealed,i+1);S.editing=firstOpen();S.revealed=Math.max(S.revealed,S.editing);S.err="";S.anim=S.editing;S.collapsed=i;persist();V.flow();setTimeout(()=>scrollToSec(S.editing),RM()?0:120)}
+function advance(i){S.revealed=Math.max(S.revealed,i+1);S.editing=firstOpen();S.revealed=Math.max(S.revealed,S.editing);S.err="";S.anim=S.editing;S.collapsed=i;persist();V.flow();setTimeout(()=>scrollToSec(S.editing),RM()?0:750)}
 function scrollToSec(i){requestAnimationFrame(()=>{const el=document.getElementById("sec"+i);if(!el)return;const rm=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;el.scrollIntoView({behavior:rm?"auto":"smooth",block:"start"})})}
 function keep(){}
 const V={
@@ -270,13 +272,13 @@ route(){
   $("screen").innerHTML=`
    <p class="qno">あなたの道のり</p>
    <h1>${allDone?"すべて終わりました":`つぎは、${plain(r[S.step][0])}`}</h1>
-   <p class="small">${allDone?"お疲れさまでした。書いたメモはこの画面でいつでも見られます。":`あと${r.length-S.step}つ。各ステップを押すと中身が開きます。`}</p>
+   <p class="small">${allDone?"お疲れさまでした。書いたメモはこの画面でいつでも見られます。":`あと${r.length-S.step}つ。いまのステップは色が付いています。`}</p>
    <ol class="road">${r.map((s,i)=>{
-     const st=i<S.step?"done":i===S.step?"now":"";const open=S.open===i;const memo=S.memos[i]||"";
+     const st=i<S.step?"done":i===S.step?"now":"";const open=true;const memo=S.memos[i]||"";
      return `<li class="${st}"><span class="dot" aria-hidden="true">${i<S.step?"✓":i+1}</span><div style="min-width:0">
-      <button type="button" class="acc" aria-expanded="${open}" data-i="${i}"><span><b>${plain(s[0])}</b><span class="small">${i<S.step?"できました":i===S.step?"いまここ・"+s[2]+"ほど":s[2]+"ほど"}</span></span><span class="chev">${open?"閉じる":"中身を見る"}</span></button>
+      <div class="acc"><span><b>${plain(s[0])}</b><span class="small">${i<S.step?"できました":i===S.step?"いまここ・"+s[2]+"ほど":"このあと・"+s[2]+"ほど"}</span></span></div>
       ${S.flash&&i===S.step&&!open?"":""}
-      ${open?`<div class="panel${S.anim==="r"+i?" enter":""}">
+      ${open?`<div class="panel${S.anim==="r"+i?" enter":""}${i>S.step?" later":""}">
         ${S.flash&&i===S.step?`<p class="flash" role="status">✓ ${S.flash}</p>`:""}
         <dl class="dl"><dt>やること</dt><dd>${rich(s[0])}</dd><dt>用意するもの</dt><dd>${rich(s[1])}</dd><dt>時間</dt><dd>${s[2]}ほど</dd><dt>終わりの目安</dt><dd>${rich(s[3])}</dd></dl>
         ${glossBlock(s[0],s[1],s[3])}
@@ -286,10 +288,9 @@ route(){
       </div>`:(memo&&i<S.step?`<div class="memo" style="margin-top:6px">${esc(memo)}</div>`:"")}
      </div></li>`}).join("")}</ol>
    ${SAVE()}`;
-  document.querySelectorAll(".acc").forEach(b=>b.onclick=()=>{const i=+b.dataset.i;S.open=S.open===i?-1:i;S.flash="";S.anim="r"+i;V.route();S.anim=null});
-  document.querySelectorAll("textarea").forEach(t=>t.oninput=()=>{S.memos[t.dataset.i]=t.value;persist();const s=$("sv"+t.dataset.i);if(s)s.textContent="保存しました"});
+    document.querySelectorAll("textarea").forEach(t=>t.oninput=()=>{S.memos[t.dataset.i]=t.value;persist();const s=$("sv"+t.dataset.i);if(s)s.textContent="保存しました"});
   document.querySelectorAll("[data-undo]").forEach(b=>b.onclick=()=>{S.step=+b.dataset.undo;S.open=S.step;S.flash="";persist();V.route()});
-  if($("doDone"))$("doDone").onclick=()=>{const done=plain(r[S.step][0]);S.step++;S.open=S.step;S.flash=`「${done}」ができました。次はこちらです`;S.anim="r"+S.step;persist();V.route();S.anim=null;const el=document.querySelector(".now");if(el)el.scrollIntoView({block:"center",behavior:"smooth"})};
+  if($("doDone"))$("doDone").onclick=()=>{const done=plain(r[S.step][0]);S.step++;S.open=S.step;S.flash=`「${done}」ができました。次はこちらです`;S.anim="r"+S.step;persist();V.route();S.anim=null;setTimeout(()=>{const el=document.querySelector(".now");if(el)el.scrollIntoView({block:"start",behavior:RM()?"auto":"smooth"})},RM()?0:750)};
   if($("doBook"))$("doBook").onclick=()=>go("book");
   if($("doLine"))$("doLine").onclick=()=>go("line");
   bar([{id:"b",label:backLabel(),cls:"back",on:back},{id:"n",label:"担当者に相談する",cls:"primary",on:()=>go("book")}],"相談すると、この道のりとメモを担当者に伝えられます");
