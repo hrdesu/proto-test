@@ -65,8 +65,10 @@ button:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px so
 .ans span{min-width:0}
 .ans b{display:block;font-size:13px;color:var(--sub);font-weight:400}
 .ans button{flex:none;font:inherit;font-size:14px;border:1px solid var(--line);background:var(--bg);color:var(--accent-ink);border-radius:999px;padding:4px 12px;min-height:36px;cursor:pointer}
+.kw{font-weight:700;text-decoration:underline;text-decoration-color:var(--note-line);text-decoration-thickness:3px;text-underline-offset:3px}
 .term{font:inherit;background:none;border:0;padding:0;color:var(--accent-ink);text-decoration:underline dotted;text-underline-offset:4px;cursor:pointer}
 .term::after{content:"？";font-size:.75em;margin-left:1px}
+.gloss b{display:block;font-size:14px;color:var(--sub)}
 .gloss{display:block;background:var(--note);border:1px solid var(--note-line);border-radius:10px;padding:8px 12px;margin:6px 0;font-size:15px;color:var(--fg)}
 .road{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .road>li{display:grid;grid-template-columns:34px minmax(0,1fr);column-gap:12px;position:relative;padding-bottom:14px}
@@ -78,7 +80,7 @@ button:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px so
 .now .dot{border-color:var(--accent);background:var(--accent);color:var(--card);box-shadow:0 0 0 5px var(--accent-soft)}
 .acc{font:inherit;width:100%;text-align:left;background:none;border:0;color:var(--fg);padding:2px 0;cursor:pointer;display:flex;justify-content:space-between;gap:8px;align-items:flex-start;min-height:44px}
 .acc b{display:block}
-.acc .chev{flex:none;color:var(--sub);font-size:14px;margin-top:4px}
+.acc .chev{flex:none;color:var(--accent-ink);font-size:13px;margin-top:2px;border:1px solid var(--line);border-radius:999px;padding:4px 10px;background:var(--card);white-space:nowrap}
 .now .acc b{color:var(--accent-ink)}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:6px;display:flex;flex-direction:column;gap:12px}
 .now .panel{border:2px solid var(--accent)}
@@ -104,7 +106,15 @@ textarea{font:inherit;font-size:17px;width:100%;min-height:96px;border:2px solid
 .steps i.on{background:var(--accent)}
 .steps i.cur{background:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
 .inline-confirm{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--accent-soft);border-radius:12px;padding:10px 12px;font-size:15px}
-@media (prefers-reduced-motion:no-preference){main{animation:in .2s ease-out}.flash{animation:in .3s ease-out}@keyframes in{from{opacity:.4;transform:translateY(6px)}to{opacity:1;transform:none}}}
+@media (prefers-reduced-motion:no-preference){
+main{animation:in .35s ease-out}
+.enter{animation:rise .6s cubic-bezier(.2,.7,.2,1) both}
+.fold{animation:fold .4s ease-out both}
+.flash{animation:in .4s ease-out}
+.opt{transition:background-color .2s,border-color .2s}
+@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes rise{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+@keyframes fold{from{opacity:.3;transform:scaleY(.85)}to{opacity:1;transform:none}}}
 </style>
 
 <div class="app">
@@ -148,7 +158,7 @@ const QS=[
  {q:"相続のことを、家族と話したことはありますか？",short:"家族と話したこと",a:["よく話す","少しだけ","ない","わからない"]}
 ];
 const KEY="yorisoi-proto-v2";
-const FRESH=()=>({screen:"home",hist:[],worries:[],ans:{},q:0,step:0,open:0,memos:{},flash:"",contact:null,consent:false,err:"",confirmReset:false,returnTo:null,revealed:0,editing:0});
+const FRESH=()=>({screen:"home",hist:[],worries:[],ans:{},q:0,step:0,open:0,memos:{},flash:"",contact:null,consent:false,err:"",confirmReset:false,returnTo:null,revealed:0,editing:0,anim:null,busy:false});
 let S=FRESH();
 try{const raw=localStorage.getItem(KEY);if(raw){const d=JSON.parse(raw);if(d&&d.worries)S={...FRESH(),...d,screen:"home",hist:[],err:"",flash:""};}}catch(e){}
 function persist(){try{localStorage.setItem(KEY,JSON.stringify({worries:S.worries,ans:S.ans,q:S.q,step:S.step,memos:S.memos,revealed:S.revealed,editing:S.editing,lastScreen:S.screen}))}catch(e){}}
@@ -161,7 +171,8 @@ function back(){const h=S.hist.pop();if(!h){S.screen="home";}else{S.screen=h.scr
 function backLabel(){const h=S.hist[S.hist.length-1];return h?`← 戻る<small>${nameOf(h)}へ</small>`:"← 戻る"}
 function route(){return ROUTES[S.worries[0]||"talk"]}
 function wById(id){return WORRIES.find(w=>w.id===id)}
-function rich(t){return esc(t).replace(/\[\[(.+?)\]\]/g,(m,k)=>`<button type="button" class="term" data-term="${k}">${k}</button>`)}
+function rich(t){return esc(t).replace(/\[\[(.+?)\]\]/g,(m,k)=>`<span class="kw">${k}</span>`)}
+function glossBlock(...fields){const ks=[];fields.forEach(f=>(f||"").replace(/\[\[(.+?)\]\]/g,(m,k)=>{if(!ks.includes(k))ks.push(k)}));return ks.map(k=>`<div class="gloss"><b>「${k}」とは</b>${GLOSS[k]||""}</div>`).join("")}
 function plain(t){return t.replace(/\[\[(.+?)\]\]/g,"$1")}
 function bindTerms(root){root.querySelectorAll(".term").forEach(b=>b.onclick=()=>{const nx=b.nextElementSibling;if(nx&&nx.classList.contains("gloss")){nx.remove();return}const g=document.createElement("span");g.className="gloss";g.textContent=`${b.dataset.term}：${GLOSS[b.dataset.term]||""}`;b.after(g)})}
 function bar(buttons,hint){
@@ -184,7 +195,8 @@ function answerList(upto,editable){
 }
 
 function firstOpen(){if(!S.worries.length||S.revealed<1)return 0;for(let i=0;i<QS.length;i++){if(!S.ans["q"+i])return i+1}return QS.length+1}
-function advance(i){S.revealed=Math.max(S.revealed,i+1);S.editing=firstOpen();S.revealed=Math.max(S.revealed,S.editing);S.err="";persist();V.flow();scrollToSec(S.editing)}
+const RM=()=>!!(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+function advance(i){S.revealed=Math.max(S.revealed,i+1);S.editing=firstOpen();S.revealed=Math.max(S.revealed,S.editing);S.err="";S.anim=S.editing;S.collapsed=i;persist();V.flow();setTimeout(()=>scrollToSec(S.editing),RM()?0:120)}
 function scrollToSec(i){requestAnimationFrame(()=>{const el=document.getElementById("sec"+i);if(!el)return;const rm=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;el.scrollIntoView({behavior:rm?"auto":"smooth",block:"start"})})}
 function keep(){}
 const V={
@@ -217,7 +229,7 @@ flow(){
     const open=i===S.editing;
     if(i===total){
       const main=wById(S.worries[0]);const others=S.worries.slice(1).map(wById);
-      blocks.push(`<section class="sec" id="sec${i}"><p class="qno">お話を整理しました</p>
+      blocks.push(`<section class="sec${S.anim===i?" enter":""}" id="sec${i}"><p class="qno">お話を整理しました</p>
         <h1>いちばん気になっているのは<br>「${main.short}」ですね</h1>
         <div class="card quote"><p>${S.ans.q2==="ない"?"まだ家族と話したことがないとのこと。最初から大きなことをしなくて大丈夫です。":"答えていただいた内容をもとに、無理のない順番を考えました。"}</p></div>
         <div class="card" style="display:flex;gap:16px;align-items:center"><span class="count">${r.length}</span><p>あなたがやることは<b>${r.length}つ</b>です。<br><span class="small">まずは最初の1つだけ。${r[0][2]}ほどで終わります。</span></p></div>
@@ -227,25 +239,26 @@ flow(){
     }
     if(i===0){
       if(open){
-        blocks.push(`<section class="sec" id="sec0"><p class="qno">はじめに</p><h1>いま、気になっていることは<br>どれですか？</h1>
+        blocks.push(`<section class="sec${S.anim===0?" enter":""}" id="sec0"><p class="qno">はじめに</p><h1>いま、気になっていることは<br>どれですか？</h1>
           <p class="lead">いくつ選んでも大丈夫です。一番気になるものを先に選んでください。</p>
           ${S.err?`<p class="err" role="alert">${S.err}</p>`:""}
           <div class="choice">${WORRIES.map(w=>{const k=S.worries.indexOf(w.id);return `<button type="button" class="opt" aria-pressed="${k>=0}" data-w="${w.id}"><span class="box">${k>=0?k+1:""}</span><span>${w.label}</span></button>`}).join("")}</div>
           <p class="small">どれにも当てはまらないときは、右上の「担当者に相談」から聞けます。</p>
           <button type="button" class="btn primary" id="wOk" ${S.worries.length?"":'aria-disabled="true"'}>これで決める</button></section>`);
-      }else blocks.push(`<div class="ans" id="sec0"><span><b>気になること</b>${S.worries.map(id=>wById(id).short).join("、")}</span><button type="button" data-edit="0">直す</button></div>`);
+      }else blocks.push(`<div class="ans${S.collapsed===0?" fold":""}" id="sec0"><span><b>気になること</b>${S.worries.map(id=>wById(id).short).join("、")}</span><button type="button" data-edit="0">直す</button></div>`);
       continue;
     }
     const it=QS[i-1];const cur=S.ans["q"+(i-1)];
     if(open){
-      blocks.push(`<section class="sec" id="sec${i}"><p class="qno">質問 ${i} / ${QS.length}</p><h1>${it.q}</h1>
+      blocks.push(`<section class="sec${S.anim===i?" enter":""}" id="sec${i}"><p class="qno">質問 ${i} / ${QS.length}</p><h1>${it.q}</h1>
         <div class="choice">${it.a.map(a=>`<button type="button" class="opt round" aria-pressed="${cur===a}" data-q="${i-1}" data-a="${esc(a)}"><span class="box">●</span><span>${a}</span></button>`).join("")}</div></section>`);
-    }else blocks.push(`<div class="ans" id="sec${i}"><span><b>${it.short}</b>${cur}</span><button type="button" data-edit="${i}">直す</button></div>`);
+    }else blocks.push(`<div class="ans${S.collapsed===i?" fold":""}" id="sec${i}"><span><b>${it.short}</b>${cur}</span><button type="button" data-edit="${i}">直す</button></div>`);
   }
   $("screen").innerHTML=`<div class="flowwrap">${blocks.join("")}</div>${SAVE()}`;
+  S.anim=null;S.collapsed=null;
   document.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{const id=b.dataset.w;const k=S.worries.indexOf(id);k>=0?S.worries.splice(k,1):S.worries.push(id);S.err="";persist();V.flow();keep("sec0")});
   if($("wOk"))$("wOk").onclick=()=>{if(!S.worries.length){S.err="1つ選んでください。";V.flow();return}advance(0)};
-  document.querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>{S.ans["q"+b.dataset.q]=b.dataset.a;persist();advance(+b.dataset.q+1)});
+  document.querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>{if(S.busy)return;S.busy=true;S.ans["q"+b.dataset.q]=b.dataset.a;persist();V.flow();setTimeout(()=>{S.busy=false;advance(+b.dataset.q+1)},RM()?0:450)});
   document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>{S.editing=+b.dataset.edit;V.flow();scrollToSec(S.editing)});
   const step=Math.min(S.editing,total);
   const dots=`<span class="steps" aria-label="${step<total?"質問の進み具合":"質問はすべて終わりました"}">${Array.from({length:total},(_,k)=>`<i class="${k<S.revealed?"on":""}${k===step?" cur":""}"></i>`).join("")}</span>`;
@@ -261,22 +274,22 @@ route(){
    <ol class="road">${r.map((s,i)=>{
      const st=i<S.step?"done":i===S.step?"now":"";const open=S.open===i;const memo=S.memos[i]||"";
      return `<li class="${st}"><span class="dot" aria-hidden="true">${i<S.step?"✓":i+1}</span><div style="min-width:0">
-      <button type="button" class="acc" aria-expanded="${open}" data-i="${i}"><span><b>${plain(s[0])}</b><span class="small">${i<S.step?"できました":i===S.step?"いまここ・"+s[2]+"ほど":s[2]+"ほど"}</span></span><span class="chev">${open?"閉じる ▲":"開く ▼"}</span></button>
+      <button type="button" class="acc" aria-expanded="${open}" data-i="${i}"><span><b>${plain(s[0])}</b><span class="small">${i<S.step?"できました":i===S.step?"いまここ・"+s[2]+"ほど":s[2]+"ほど"}</span></span><span class="chev">${open?"閉じる":"中身を見る"}</span></button>
       ${S.flash&&i===S.step&&!open?"":""}
-      ${open?`<div class="panel">
+      ${open?`<div class="panel${S.anim==="r"+i?" enter":""}">
         ${S.flash&&i===S.step?`<p class="flash" role="status">✓ ${S.flash}</p>`:""}
         <dl class="dl"><dt>やること</dt><dd>${rich(s[0])}</dd><dt>用意するもの</dt><dd>${rich(s[1])}</dd><dt>時間</dt><dd>${s[2]}ほど</dd><dt>終わりの目安</dt><dd>${rich(s[3])}</dd></dl>
+        ${glossBlock(s[0],s[1],s[3])}
         ${s[4]?`<label for="memo${i}" style="font-weight:700;font-size:16px">ここに書けます（書いた内容は保存されます）</label><textarea id="memo${i}" data-i="${i}" placeholder="${esc(s[4])}">${esc(memo)}</textarea><span class="saved" id="sv${i}">${memo?"保存しました":""}</span>`:(memo?`<div class="memo">${esc(memo)}</div>`:"")}
         ${i===S.step?(i===r.length-1?`<button type="button" class="btn primary" id="doBook">相談を予約する</button>`:`<button type="button" class="btn primary" id="doDone">できた</button><button type="button" class="link" id="doLine">続きをLINEで受け取る</button>`):""}
         ${i<S.step?`<button type="button" class="link" data-undo="${i}">まだできていなかった（ここに戻る）</button>`:""}
       </div>`:(memo&&i<S.step?`<div class="memo" style="margin-top:6px">${esc(memo)}</div>`:"")}
      </div></li>`}).join("")}</ol>
    ${SAVE()}`;
-  bindTerms($("screen"));
-  document.querySelectorAll(".acc").forEach(b=>b.onclick=()=>{const i=+b.dataset.i;S.open=S.open===i?-1:i;S.flash="";V.route()});
+  document.querySelectorAll(".acc").forEach(b=>b.onclick=()=>{const i=+b.dataset.i;S.open=S.open===i?-1:i;S.flash="";S.anim="r"+i;V.route();S.anim=null});
   document.querySelectorAll("textarea").forEach(t=>t.oninput=()=>{S.memos[t.dataset.i]=t.value;persist();const s=$("sv"+t.dataset.i);if(s)s.textContent="保存しました"});
   document.querySelectorAll("[data-undo]").forEach(b=>b.onclick=()=>{S.step=+b.dataset.undo;S.open=S.step;S.flash="";persist();V.route()});
-  if($("doDone"))$("doDone").onclick=()=>{const done=plain(r[S.step][0]);S.step++;S.open=S.step;S.flash=`「${done}」ができました。次はこちらです`;persist();V.route();const el=document.querySelector(".now");if(el)el.scrollIntoView({block:"center",behavior:"smooth"})};
+  if($("doDone"))$("doDone").onclick=()=>{const done=plain(r[S.step][0]);S.step++;S.open=S.step;S.flash=`「${done}」ができました。次はこちらです`;S.anim="r"+S.step;persist();V.route();S.anim=null;const el=document.querySelector(".now");if(el)el.scrollIntoView({block:"center",behavior:"smooth"})};
   if($("doBook"))$("doBook").onclick=()=>go("book");
   if($("doLine"))$("doLine").onclick=()=>go("line");
   bar([{id:"b",label:backLabel(),cls:"back",on:back},{id:"n",label:"担当者に相談する",cls:"primary",on:()=>go("book")}],"相談すると、この道のりとメモを担当者に伝えられます");
