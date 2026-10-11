@@ -2,19 +2,19 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Zen+Maru+Gothic:wght@500;700&display=swap">
 <style>
-/* Layout: one phone-width column, one task per screen, fixed bottom action bar, persistent "人に聞く" */
+/* Layout: one phone-width column, one task per screen, fixed bottom action bar. Route = accordion timeline where each step opens in place */
 :root{
   --bg:#f6f4f7; --card:#ffffff; --fg:#2a2430; --sub:#625a69; --line:#ddd6e1;
-  --accent:#9c3f86; --accent-soft:#f6e6f1; --accent-ink:#6e2a5e; --ok:#2f7a5b; --ok-soft:#e4f2ea;
+  --accent:#9c3f86; --accent-soft:#f6e6f1; --accent-ink:#6e2a5e; --ok:#2f7a5b; --ok-soft:#e4f2ea; --note:#fbf8e9; --note-line:#e6dcae;
   --display:"Zen Maru Gothic","Hiragino Maru Gothic ProN","BIZ UDPGothic",sans-serif;
   --body:"BIZ UDPGothic","Hiragino Sans","Yu Gothic",Meiryo,sans-serif;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#18151b; --card:#231f27; --fg:#f1ecf3; --sub:#b8aebf; --line:#3d3542;
-  --accent:#e08ccc; --accent-soft:#3a2535; --accent-ink:#f4c6e8; --ok:#7fd0a8; --ok-soft:#1f3329; color-scheme:dark}}
+  --accent:#e08ccc; --accent-soft:#3a2535; --accent-ink:#f4c6e8; --ok:#7fd0a8; --ok-soft:#1f3329; --note:#2b2818; --note-line:#4d4628; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#18151b; --card:#231f27; --fg:#f1ecf3; --sub:#b8aebf; --line:#3d3542;
-  --accent:#e08ccc; --accent-soft:#3a2535; --accent-ink:#f4c6e8; --ok:#7fd0a8; --ok-soft:#1f3329; color-scheme:dark}
+  --accent:#e08ccc; --accent-soft:#3a2535; --accent-ink:#f4c6e8; --ok:#7fd0a8; --ok-soft:#1f3329; --note:#2b2818; --note-line:#4d4628; color-scheme:dark}
 *{box-sizing:border-box}
 html,body{height:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:18px;line-height:1.75}
@@ -22,70 +22,100 @@ body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:18px
 .top{position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:8px;padding-block:10px;z-index:2;border-bottom:1px solid var(--line)}
 .brand{font-family:var(--display);font-weight:700;font-size:16px;display:flex;gap:8px;align-items:center}
 .tag{font-family:var(--body);font-size:12px;font-weight:400;border:1px solid var(--line);border-radius:999px;padding:0 8px;color:var(--sub)}
-.ask{font:inherit;font-size:15px;font-weight:700;color:var(--accent-ink);background:var(--accent-soft);border:0;border-radius:999px;padding:8px 14px;min-height:44px;cursor:pointer}
-main{flex:1;padding-block:20px 140px;display:flex;flex-direction:column;gap:18px}
+.ask{font:inherit;font-size:14px;font-weight:700;color:var(--accent-ink);background:var(--accent-soft);border:0;border-radius:12px;padding:6px 12px;min-height:44px;cursor:pointer;line-height:1.3;text-align:center}
+.ask small{display:block;font-weight:400;font-size:11px}
+main{flex:1;padding-block:20px 150px;display:flex;flex-direction:column;gap:18px}
 h1{font-family:var(--display);font-size:26px;line-height:1.45;margin:0;text-wrap:balance}
-h2{font-family:var(--display);font-size:20px;margin:0}
+h2{font-family:var(--display);font-size:19px;margin:0}
 p{margin:0}
 .lead{color:var(--sub)}
-.save{font-size:14px;color:var(--ok);display:flex;align-items:center;gap:6px}
-.save::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ok)}
+.small{font-size:15px;color:var(--sub)}
+.save{font-size:14px;color:var(--ok);display:flex;align-items:flex-start;gap:8px;line-height:1.6}
+.save::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;background:var(--ok);margin-top:7px}
 .choice{display:flex;flex-direction:column;gap:10px}
 .opt{font:inherit;text-align:left;width:100%;min-height:60px;padding:14px 16px;border:2px solid var(--line);border-radius:14px;background:var(--card);color:var(--fg);display:flex;gap:12px;align-items:center;cursor:pointer}
-.opt .box{flex:none;width:26px;height:26px;border:2px solid var(--line);border-radius:7px;display:grid;place-items:center;font-size:16px;color:transparent}
+.opt .box{flex:none;width:26px;height:26px;border:2px solid var(--line);border-radius:7px;display:grid;place-items:center;font-size:15px;color:transparent}
 .opt.round .box{border-radius:50%}
 .opt[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
 .opt[aria-pressed="true"] .box{border-color:var(--accent);background:var(--accent);color:var(--card)}
-.opt:focus-visible,.btn:focus-visible,.ask:focus-visible,.link:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));z-index:3}
+button:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));z-index:3}
 .bar-in{max-width:408px;margin:0 auto;display:flex;gap:10px}
-.btn{font:inherit;font-weight:700;min-height:56px;border-radius:14px;padding:0 18px;cursor:pointer;border:2px solid var(--line);background:var(--card);color:var(--fg)}
+.btn{font:inherit;font-weight:700;min-height:56px;border-radius:14px;padding:0 16px;cursor:pointer;border:2px solid var(--line);background:var(--card);color:var(--fg);line-height:1.3}
+.btn small{display:block;font-size:12px;font-weight:400}
 .btn.primary{flex:1;background:var(--accent);border-color:var(--accent);color:var(--card)}
-.btn.back{flex:none}
+.btn.back{flex:none;max-width:42%}
+.btn.sm{min-height:48px;font-size:16px}
 .btn[aria-disabled="true"]{opacity:.45}
-.hint{font-size:14px;color:var(--sub);text-align:center;margin-top:6px}
+.hint{font-size:13px;color:var(--sub);text-align:center;margin-top:4px}
 .err{font-size:15px;color:var(--accent-ink);background:var(--accent-soft);border-radius:10px;padding:8px 12px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
-.quote{border-left:4px solid var(--accent);padding:4px 0 4px 14px;border-radius:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px}
+.quote{border-left:4px solid var(--accent);border-radius:0 12px 12px 0}
 .count{font-family:var(--display);font-size:44px;line-height:1;color:var(--accent)}
 .prog{display:flex;gap:6px}
 .prog i{flex:1;height:6px;border-radius:3px;background:var(--line)}
 .prog i.on{background:var(--accent)}
 .qno{font-size:15px;color:var(--sub)}
-.line{list-style:none;margin:0;padding:0}
-.line li{display:grid;grid-template-columns:34px 1fr;gap:12px;position:relative;padding-bottom:18px}
-.line li::before{content:"";position:absolute;left:16px;top:30px;bottom:-2px;width:3px;background:var(--line)}
-.line li:last-child::before{display:none}
-.line li.done::before{background:var(--ok)}
-.dot{width:34px;height:34px;border-radius:50%;border:3px solid var(--line);background:var(--card);display:grid;place-items:center;font-size:15px;font-weight:700;color:var(--sub);z-index:1}
-.done .dot{border-color:var(--ok);background:var(--ok);color:var(--card)}
-.now .dot{border-color:var(--accent);background:var(--accent);color:var(--card);box-shadow:0 0 0 6px var(--accent-soft)}
-.st{min-width:0}
-.st b{display:block}
-.now .st{background:var(--accent-soft);border-radius:12px;padding:10px 12px;margin-top:-6px}
-.now .st b{color:var(--accent-ink)}
-.small{font-size:15px;color:var(--sub)}
 .dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0}
 .dl dt{color:var(--sub);font-size:15px}
-.dl dd{margin:0}
-.link{font:inherit;background:none;border:0;color:var(--accent-ink);text-decoration:underline;padding:6px 0;cursor:pointer;text-align:left}
-.done-badge{display:inline-flex;gap:6px;align-items:center;background:var(--ok-soft);color:var(--ok);border-radius:999px;padding:4px 12px;font-size:15px;font-weight:700}
+.dl dd{margin:0;min-width:0}
+.link{font:inherit;background:none;border:0;color:var(--accent-ink);text-decoration:underline;padding:6px 0;cursor:pointer;text-align:left;min-height:44px}
+.answers{display:flex;flex-direction:column;gap:6px}
+.ans{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:15px}
+.ans span{min-width:0}
+.ans b{display:block;font-size:13px;color:var(--sub);font-weight:400}
+.ans button{flex:none;font:inherit;font-size:14px;border:1px solid var(--line);background:var(--bg);color:var(--accent-ink);border-radius:999px;padding:4px 12px;min-height:36px;cursor:pointer}
+.term{font:inherit;background:none;border:0;padding:0;color:var(--accent-ink);text-decoration:underline dotted;text-underline-offset:4px;cursor:pointer}
+.term::after{content:"？";font-size:.75em;margin-left:1px}
+.gloss{display:block;background:var(--note);border:1px solid var(--note-line);border-radius:10px;padding:8px 12px;margin:6px 0;font-size:15px;color:var(--fg)}
+.road{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.road>li{display:grid;grid-template-columns:34px minmax(0,1fr);column-gap:12px;position:relative;padding-bottom:14px}
+.road>li::before{content:"";position:absolute;left:16px;top:34px;bottom:0;width:3px;background:var(--line)}
+.road>li:last-child::before{display:none}
+.road>li.done::before{background:var(--ok)}
+.dot{width:34px;height:34px;border-radius:50%;border:3px solid var(--line);background:var(--card);display:grid;place-items:center;font-size:15px;font-weight:700;color:var(--sub);z-index:1}
+.done .dot{border-color:var(--ok);background:var(--ok);color:var(--card)}
+.now .dot{border-color:var(--accent);background:var(--accent);color:var(--card);box-shadow:0 0 0 5px var(--accent-soft)}
+.acc{font:inherit;width:100%;text-align:left;background:none;border:0;color:var(--fg);padding:2px 0;cursor:pointer;display:flex;justify-content:space-between;gap:8px;align-items:flex-start;min-height:44px}
+.acc b{display:block}
+.acc .chev{flex:none;color:var(--sub);font-size:14px;margin-top:4px}
+.now .acc b{color:var(--accent-ink)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:6px;display:flex;flex-direction:column;gap:12px}
+.now .panel{border:2px solid var(--accent)}
+textarea{font:inherit;font-size:17px;width:100%;min-height:96px;border:2px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--bg);color:var(--fg);resize:vertical}
+.saved{font-size:13px;color:var(--ok)}
+.flash{background:var(--ok-soft);color:var(--ok);border-radius:12px;padding:10px 12px;font-size:15px;font-weight:700}
+.memo{background:var(--note);border:1px solid var(--note-line);border-radius:10px;padding:8px 12px;font-size:15px;white-space:pre-wrap;word-break:break-word}
 .consent{display:flex;gap:12px;align-items:flex-start;font-size:16px}
-.consent input{width:26px;height:26px;margin-top:2px;accent-color:var(--accent)}
+.consent input{width:26px;height:26px;margin-top:2px;accent-color:var(--accent);flex:none}
 .note{font-size:13px;color:var(--sub);border-top:1px dashed var(--line);padding-top:12px}
-@media (prefers-reduced-motion:no-preference){main{animation:in .25s ease-out}@keyframes in{from{opacity:.4;transform:translateY(6px)}to{opacity:1;transform:none}}}
+.foot{font-size:13px;text-align:center}
+.map{font-size:15px;line-height:1.7}
+.map ol{margin:0;padding-left:1.3em}
+.map li{margin:4px 0}
+.map .br{border-left:3px solid var(--line);padding-left:10px;margin:4px 0 4px 4px;color:var(--sub)}
+.inline-confirm{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--accent-soft);border-radius:12px;padding:10px 12px;font-size:15px}
+@media (prefers-reduced-motion:no-preference){main{animation:in .2s ease-out}.flash{animation:in .3s ease-out}@keyframes in{from{opacity:.4;transform:translateY(6px)}to{opacity:1;transform:none}}}
 </style>
 
 <div class="app">
   <header class="top">
     <div class="brand">相続準備ガイド <span class="tag">試作品</span></div>
-    <button class="ask" id="askBtn" type="button">人に聞く</button>
+    <button class="ask" id="askBtn" type="button">担当者に相談<small>電話・お店・LINE</small></button>
   </header>
   <main id="screen" aria-live="polite"></main>
 </div>
 <div class="bar" id="bar"><div class="bar-in" id="barIn"></div><p class="hint" id="barHint"></p></div>
 
 <script>
+const GLOSS={
+ "保険証券":"保険に入ったときに届く、契約内容が書かれた書類です。保険会社名と証券番号が書いてあります。",
+ "支店名":"通帳の表紙や1ページ目に書いてある「◯◯支店」のことです。",
+ "暦年贈与":"1年間（1月〜12月）に110万円までの贈与なら、贈与税がかからない仕組みです。",
+ "遺言":"自分が亡くなった後、財産を誰にどう分けるかを書き残すものです。決まった書き方があります。",
+ "相続税":"亡くなった人の財産を受け取ったときにかかる税金です。財産が一定額より少なければかかりません。",
+ "代理出金の仕組み":"本人の判断が難しくなったとき、あらかじめ決めた家族が、本人の生活費などを代わりに引き出せる仕組みです。"
+};
 const WORRIES=[
  {id:"talk",label:"家族で話したことがない",short:"家族とまだ話せていない"},
  {id:"where",label:"通帳や保険がどこにあるか、家族が知らない",short:"お金の置き場所を家族が知らない"},
@@ -94,47 +124,78 @@ const WORRIES=[
  {id:"tax",label:"相続税がかかるか分からない",short:"相続税がかかるか分からない"},
  {id:"tidy",label:"家や物の片付けが手つかず",short:"片付けが手つかず"}
 ];
+/* [title, bring, time, done-criteria, memo placeholder or null] */
 const ROUTES={
- talk:[["子どもに伝えたいことを、1つだけ書く","メモ帳とペン","5分","1行書けたら完了です。うまく書けなくても大丈夫です。"],["話すきっかけを選ぶ","カレンダー","5分","次の帰省や電話の日を1つ決めたら完了です。"],["書いたメモを家族に見せる","書いたメモ","10分","見せられたら完了です。感想は聞かなくても大丈夫です。"],["銀行の人と一緒に、残りを整理する","これまでのメモ","30分","相談の予約ができたら完了です。"]],
- where:[["よく使う通帳を1冊だけ書き出す","通帳1冊","5分","銀行名と支店名を1つ書けたら完了です。"],["残りの通帳と保険証券を書き出す","通帳・保険証券","20分","思い出せる分だけ書けたら完了です。"],["置き場所を家族に伝える","書いたメモ","5分","1人に伝えられたら完了です。"],["銀行の人と、漏れがないか確かめる","これまでのメモ","30分","相談の予約ができたら完了です。"]],
- leave:[["残したいものを1つ書く","メモ帳とペン","5分","お金でも物でも、1つ書けたら完了です。"],["誰に残したいかを書く","書いたメモ","5分","名前を書けたら完了です。"],["生きているうちに渡す方法を知る","なし","10分","読み終えたら完了です。暦年贈与や遺言など、方法の違いを紹介します。"],["銀行の人に、自分に合う方法を聞く","これまでのメモ","30分","相談の予約ができたら完了です。"]],
- dementia:[["お金のことを頼みたい人を1人決める","なし","5分","名前が浮かんだら完了です。"],["生活費の希望を書く","メモ帳とペン","10分","毎月いくらくらい使いたいか書けたら完了です。"],["家族が代わりに払い出せる仕組みを知る","なし","10分","読み終えたら完了です。"],["銀行の人に相談する","これまでのメモ","30分","相談の予約ができたら完了です。"]],
- tax:[["財産のおおよその額を選ぶ","なし","3分","近いものを選べたら完了です。分からなくても進めます。"],["相続税がかかるかの目安を知る","なし","10分","読み終えたら完了です。"],["今からできる対策を知る","なし","10分","読み終えたら完了です。"],["銀行の人と試算する","これまでのメモ","30分","相談の予約ができたら完了です。"]],
- tidy:[["片付ける場所を1か所だけ決める","なし","3分","場所を決めたら完了です。"],["その場所の、残したい物を1つ選ぶ","なし","10分","1つ選べたら完了です。"],["家族に残したい物を伝える","なし","5分","1人に伝えられたら完了です。"],["専門の人に相談するか決める","なし","5分","決めたら完了です。"]]
+ talk:[["子どもに伝えたいことを、1つだけ書く","メモ帳とペン（下に書いても大丈夫です）","5分","1行書けたら終わりです。うまく書けなくても大丈夫です。","例：家のことは長男に相談してほしい"],["話すきっかけの日を決める","カレンダー","5分","次の帰省や電話の日を1つ決めたら終わりです。","例：お正月に帰ってきたとき"],["書いたことを家族に見せる","書いたメモ","10分","見せられたら終わりです。感想は聞かなくても大丈夫です。",null],["担当者と一緒に、残りを整理する","これまでのメモ","30分","相談の予約ができたら終わりです。",null]],
+ where:[["よく使う通帳を1冊だけ書き出す","通帳1冊","5分","銀行名と[[支店名]]を1つ書けたら終わりです。","例：◯◯銀行 △△支店（タンスの上の引き出し）"],["残りの通帳と[[保険証券]]を書き出す","通帳・[[保険証券]]","20分","思い出せる分だけ書けたら終わりです。","例：□□生命 医療保険（仏壇の下）"],["置き場所を家族に伝える","書いたメモ","5分","1人に伝えられたら終わりです。",null],["担当者と、漏れがないか確かめる","これまでのメモ","30分","相談の予約ができたら終わりです。",null]],
+ leave:[["残したいものを1つ書く","メモ帳とペン（下に書いても大丈夫です）","5分","お金でも物でも、1つ書けたら終わりです。","例：母の着物"],["誰に残したいかを書く","書いたメモ","5分","名前を書けたら終わりです。","例：長女"],["生きているうちに渡す方法を知る","なし","10分","読み終えたら終わりです。[[暦年贈与]]や[[遺言]]など、方法の違いを紹介します。",null],["担当者に、自分に合う方法を聞く","これまでのメモ","30分","相談の予約ができたら終わりです。",null]],
+ dementia:[["お金のことを頼みたい人を1人決める","なし","5分","名前が浮かんだら終わりです。","例：次男"],["毎月の生活費の希望を書く","メモ帳とペン（下に書いても大丈夫です）","10分","毎月いくらくらい使いたいか書けたら終わりです。","例：月15万円くらい"],["家族が代わりに払い出せる仕組みを知る","なし","10分","[[代理出金の仕組み]]について読み終えたら終わりです。",null],["担当者に相談する","これまでのメモ","30分","相談の予約ができたら終わりです。",null]],
+ tax:[["財産のおおよその額を書く","なし","3分","近い金額を書けたら終わりです。分からなくても進めます。","例：預金が2千万円くらいと家"],["[[相続税]]がかかるかの目安を知る","なし","10分","読み終えたら終わりです。",null],["今からできる対策を知る","なし","10分","[[暦年贈与]]などの対策を読み終えたら終わりです。",null],["担当者と試算する","これまでのメモ","30分","相談の予約ができたら終わりです。",null]],
+ tidy:[["片付ける場所を1か所だけ決める","なし","3分","場所を決めたら終わりです。","例：押し入れの上の段"],["その場所の、残したい物を1つ選ぶ","なし","10分","1つ選べたら終わりです。","例：父のアルバム"],["家族に残したい物を伝える","なし","5分","1人に伝えられたら終わりです。",null],["専門の人に相談するか決める","なし","5分","決めたら終わりです。",null]]
 };
 const QS=[
- {q:"一緒に準備を考える人はいますか？",a:["夫・妻","子ども","ひとりで考えたい","わからない"]},
- {q:"お取引のある銀行は、いくつありますか？",a:["1つ","2〜3つ","4つ以上","わからない"]},
- {q:"相続のことを、家族と話したことはありますか？",a:["よく話す","少しだけ","ない","わからない"]}
+ {q:"一緒に準備を考える人はいますか？",short:"一緒に考える人",a:["夫・妻","子ども","ひとりで考えたい","わからない"]},
+ {q:"お取引のある銀行は、いくつありますか？",short:"取引のある銀行",a:["1つ","2〜3つ","4つ以上","わからない"]},
+ {q:"相続のことを、家族と話したことはありますか？",short:"家族と話したこと",a:["よく話す","少しだけ","ない","わからない"]}
 ];
-const S={screen:"home",hist:[],worries:[],ans:{},q:0,step:0,from:null,contact:null,consent:false,booked:false,err:""};
+const KEY="yorisoi-proto-v2";
+const FRESH=()=>({screen:"home",hist:[],worries:[],ans:{},q:0,step:0,open:0,memos:{},flash:"",contact:null,consent:false,err:"",confirmReset:false,returnTo:null});
+let S=FRESH();
+try{const raw=localStorage.getItem(KEY);if(raw){const d=JSON.parse(raw);if(d&&d.worries)S={...FRESH(),...d,screen:"home",hist:[],err:"",flash:""};}}catch(e){}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify({worries:S.worries,ans:S.ans,q:S.q,step:S.step,memos:S.memos,lastScreen:S.screen}))}catch(e){}}
 const $=id=>document.getElementById(id);
-function go(name){S.hist.push({screen:S.screen,q:S.q});S.screen=name;S.err="";render();window.scrollTo(0,0)}
-function back(){const h=S.hist.pop();if(!h)return;S.screen=h.screen;S.q=h.q;S.err="";render();window.scrollTo(0,0)}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const NAMES={home:"はじめの画面",worry:"気になることを選ぶ画面",question:"質問",summary:"整理した内容",route:"あなたの道のり",book:"相談の予約",line:"LINEの案内",map:"画面マップ",self:"自分で調べる"};
+function nameOf(h){return h.screen==="question"?`質問${h.q+1}`:NAMES[h.screen]||"前の画面"}
+function go(name,opt){S.hist.push({screen:S.screen,q:S.q});S.screen=name;S.err="";S.confirmReset=false;if(opt&&opt.q!=null)S.q=opt.q;persist();render();window.scrollTo(0,0)}
+function back(){const h=S.hist.pop();if(!h){S.screen="home";}else{S.screen=h.screen;S.q=h.q;}S.err="";persist();render();window.scrollTo(0,0)}
+function backLabel(){const h=S.hist[S.hist.length-1];return h?`← 戻る<small>${nameOf(h)}へ</small>`:"← 戻る"}
 function route(){return ROUTES[S.worries[0]||"talk"]}
 function wById(id){return WORRIES.find(w=>w.id===id)}
-function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function rich(t){return esc(t).replace(/\[\[(.+?)\]\]/g,(m,k)=>`<button type="button" class="term" data-term="${k}">${k}</button>`)}
+function plain(t){return t.replace(/\[\[(.+?)\]\]/g,"$1")}
+function bindTerms(root){root.querySelectorAll(".term").forEach(b=>b.onclick=()=>{const nx=b.nextElementSibling;if(nx&&nx.classList.contains("gloss")){nx.remove();return}const g=document.createElement("span");g.className="gloss";g.textContent=`${b.dataset.term}：${GLOSS[b.dataset.term]||""}`;b.after(g)})}
 function bar(buttons,hint){
   $("barIn").innerHTML=buttons.map(b=>`<button type="button" class="btn ${b.cls||""}" id="${b.id}" ${b.dis?'aria-disabled="true"':""}>${b.label}</button>`).join("");
   $("barHint").textContent=hint||"";
   buttons.forEach(b=>$(b.id).onclick=b.on);
   $("bar").hidden=!buttons.length;
 }
-const SAVE='<p class="save">答えは自動で保存されています。いつでも戻れます</p>';
+function resumeText(){
+  if(!S.worries.length)return "まだ何も答えていません";
+  if(Object.keys(S.ans).length<QS.length)return `次に開いたとき「質問${Math.min(Object.keys(S.ans).length+1,QS.length)}」から始まります`;
+  return `次に開いたとき「道のり」の${Math.min(S.step+1,route().length)}つめから始まります`;
+}
+const SAVE=()=>`<p class="save">答えはこの端末に保存されています。${resumeText()}。答えはいつでも直せます。</p>`;
+function answerList(upto,editable){
+  const items=[];
+  if(S.worries.length)items.push(`<div class="ans"><span><b>気になること</b>${S.worries.map(id=>wById(id).short).join("、")}</span>${editable?'<button type="button" data-edit="w">直す</button>':""}</div>`);
+  QS.forEach((x,i)=>{if(i<upto&&S.ans["q"+i])items.push(`<div class="ans"><span><b>${x.short}</b>${S.ans["q"+i]}</span>${editable?`<button type="button" data-edit="${i}">直す</button>`:""}</div>`)});
+  return items.length?`<div class="answers">${items.join("")}</div>`:"";
+}
+function bindEdits(){document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>{const e=b.dataset.edit;S.returnTo=S.screen==="summary"?"summary":null;if(e==="w")go("worry");else go("question",{q:+e})})}
 
 const V={
 home(){
+  const has=S.worries.length>0;
   $("screen").innerHTML=`
    <h1>相続の準備、<br>何から始めればいいか<br>一緒に整理しましょう</h1>
    <p class="lead">いま気になっていることを選ぶだけで、あなたが次にやることを1つずつお伝えします。</p>
-   <div class="card"><dl class="dl"><dt>かかる時間</dt><dd>3分ほど</dd><dt>入力するもの</dt><dd>名前や口座番号は不要です</dd><dt>途中でやめたら</dt><dd>続きから始められます</dd></dl></div>
-   <button type="button" class="link" id="self">自分で調べたい方は、やることリストへ</button>`;
-  $("self").onclick=()=>go("self");
-  bar([{id:"start",label:"寄り添いガイドで始める",cls:"primary",on:()=>go("worry")}]);
+   <div class="card"><dl class="dl"><dt>かかる時間</dt><dd>3分ほど</dd><dt>入力するもの</dt><dd>名前や口座番号は不要です</dd><dt>途中でやめたら</dt><dd>この端末で、続きから始められます</dd></dl></div>
+   ${has?`<div class="card"><p style="font-weight:700">前回の続きがあります</p><p class="small">${resumeText().replace("次に開いたとき","")}</p></div>`:""}
+   ${S.confirmReset?`<div class="inline-confirm" role="alert">これまでの答えとメモを消して、最初から始めますか？<button type="button" class="btn sm" id="rsY">消して始める</button><button type="button" class="btn sm" id="rsN">やめる</button></div>`:(has?`<button type="button" class="link" id="reset">最初からやり直す</button>`:"")}
+   <button type="button" class="link" id="self">自分で調べたい方は、やることリストへ</button>
+   <p class="foot"><button type="button" class="link" id="map">試作品の画面マップ（確認用）</button></p>`;
+  $("self").onclick=()=>go("self");$("map").onclick=()=>go("map");
+  if($("reset"))$("reset").onclick=()=>{S.confirmReset=true;V.home()};
+  if($("rsY"))$("rsY").onclick=()=>{S={...FRESH()};try{localStorage.removeItem(KEY)}catch(e){};render()};
+  if($("rsN"))$("rsN").onclick=()=>{S.confirmReset=false;V.home()};
+  const resume=()=>{if(Object.keys(S.ans).length<QS.length){S.q=Object.keys(S.ans).length;go("question")}else go("route")};
+  bar(has?[{id:"start",label:"続きから始める",cls:"primary",on:resume}]:[{id:"start",label:"寄り添いガイドで始める",cls:"primary",on:()=>go("worry")}]);
 },
 self(){
   $("screen").innerHTML=`<h1>自分で調べるモード</h1><p class="lead">これまでどおりの「やることリスト」と「診断」を使えます。</p><div class="card small">試作品では、この先は既存のそうぞくガイドの画面を想定しています。</div>`;
-  bar([{id:"b",label:"戻る",cls:"back",on:back}]);
+  bar([{id:"b",label:backLabel(),cls:"back",on:back}]);
 },
 worry(){
   $("screen").innerHTML=`
@@ -142,16 +203,14 @@ worry(){
    <h1>いま、気になっていることは<br>どれですか？</h1>
    <p class="lead">いくつ選んでも大丈夫です。一番気になるものを先に選んでください。</p>
    ${S.err?`<p class="err" role="alert">${S.err}</p>`:""}
-   <div class="choice">${WORRIES.map(w=>{const i=S.worries.indexOf(w.id);return `<button type="button" class="opt" aria-pressed="${i>=0}" data-id="${w.id}"><span class="box">${i>=0?i+1:""}</span><span>${w.label}</span></button>`}).join("")}
-   <button type="button" class="opt" aria-pressed="${S.worries.includes('talk')&&S.ans.unsure?'true':'false'}" data-id="unsure"><span class="box"></span><span>よく分からない（ガイドにまかせる）</span></button></div>
-   ${SAVE}`;
-  document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{
-    const id=b.dataset.id;
-    if(id==="unsure"){S.worries=["talk"];S.ans.unsure=true;}
-    else{S.ans.unsure=false;const i=S.worries.indexOf(id);i>=0?S.worries.splice(i,1):S.worries.push(id);}
-    S.err="";V.worry();
-  });
-  bar([{id:"b",label:"戻る",cls:"back",on:back},{id:"n",label:"次へ",cls:"primary",dis:!S.worries.length,on:()=>{if(!S.worries.length){S.err="1つ選んでください。分からないときは一番下を選べます。";V.worry();return}S.q=0;go("question")}}],"選んだあとで変えることもできます");
+   <div class="choice">${WORRIES.map(w=>{const i=S.worries.indexOf(w.id);return `<button type="button" class="opt" aria-pressed="${i>=0}" data-id="${w.id}"><span class="box">${i>=0?i+1:""}</span><span>${w.label}</span></button>`}).join("")}</div>
+   <p class="small">どれにも当てはまらない、よく分からないときは、右上の「担当者に相談」から聞けます。</p>
+   ${SAVE()}`;
+  document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{const id=b.dataset.id;const i=S.worries.indexOf(id);i>=0?S.worries.splice(i,1):S.worries.push(id);S.err="";persist();V.worry()});
+  bar([{id:"b",label:backLabel(),cls:"back",on:back},{id:"n",label:S.returnTo==="summary"?"直した内容で整理する":"次へ",cls:"primary",dis:!S.worries.length,on:()=>{
+    if(!S.worries.length){S.err="1つ選んでください。";V.worry();return}
+    if(S.returnTo==="summary"){S.returnTo=null;go("summary");return}
+    go("question",{q:0})}}],"選んだあとで直すこともできます");
 },
 question(){
   const it=QS[S.q];const cur=S.ans["q"+S.q];
@@ -161,85 +220,86 @@ question(){
    <h1>${it.q}</h1>
    ${S.err?`<p class="err" role="alert">${S.err}</p>`:""}
    <div class="choice">${it.a.map(a=>`<button type="button" class="opt round" aria-pressed="${cur===a}" data-a="${esc(a)}"><span class="box">●</span><span>${a}</span></button>`).join("")}</div>
-   ${SAVE}`;
-  document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{S.ans["q"+S.q]=b.dataset.a;S.err="";V.question()});
-  bar([{id:"b",label:"戻る",cls:"back",on:back},{id:"n",label:S.q<QS.length-1?"次へ":"答え終わった",cls:"primary",dis:!cur,on:()=>{
+   ${S.q>0||S.worries.length?`<details><summary class="small" style="cursor:pointer;min-height:44px">これまでの答えを見る・直す</summary><div style="margin-top:8px">${answerList(S.q,true)}</div></details>`:""}
+   ${SAVE()}`;
+  document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{S.ans["q"+S.q]=b.dataset.a;S.err="";persist();V.question()});
+  bindEdits();
+  const last=S.q===QS.length-1;
+  bar([{id:"b",label:backLabel(),cls:"back",on:back},{id:"n",label:S.returnTo==="summary"?"直した内容で整理する":(last?"答え終わった":"次へ"),cls:"primary",dis:!cur,on:()=>{
     if(!S.ans["q"+S.q]){S.err="1つ選んでください。「わからない」でも進めます。";V.question();return}
-    if(S.q<QS.length-1){S.hist.push({screen:"question",q:S.q});S.q++;S.err="";render();window.scrollTo(0,0)}else go("summary")}}]);
+    if(S.returnTo==="summary"){S.returnTo=null;go("summary");return}
+    if(!last)go("question",{q:S.q+1});else go("summary")}}]);
 },
 summary(){
-  const main=wById(S.worries[0]);const others=S.worries.slice(1).map(wById);
-  const r=route();
+  const main=wById(S.worries[0]);const others=S.worries.slice(1).map(wById);const r=route();
   $("screen").innerHTML=`
    <p class="qno">お話を整理しました</p>
    <h1>いちばん気になっているのは<br>「${main.short}」ですね</h1>
-   <div class="card quote"><p>${S.ans.q2==="ない"?"まだ家族と話したことがないとのこと。最初から大きなことをしなくて大丈夫です。":"ここまで答えていただいた内容をもとに、無理のない順番を考えました。"}</p></div>
-   <div class="card" style="display:flex;gap:16px;align-items:center"><span class="count">${r.length}</span><p>あなたがやることは<b>${r.length}つ</b>です。<br><span class="small">まずは最初の1つだけ。5分ほどで終わります。</span></p></div>
+   <div class="card quote"><p>${S.ans.q2==="ない"?"まだ家族と話したことがないとのこと。最初から大きなことをしなくて大丈夫です。":"答えていただいた内容をもとに、無理のない順番を考えました。"}</p></div>
+   <div class="card" style="display:flex;gap:16px;align-items:center"><span class="count">${r.length}</span><p>あなたがやることは<b>${r.length}つ</b>です。<br><span class="small">まずは最初の1つだけ。${r[0][2]}ほどで終わります。</span></p></div>
    ${others.length?`<p class="small">「${others.map(o=>o.short).join("」「")}」も、この準備が終わったらご案内します。</p>`:""}
-   <button type="button" class="link" id="redo">答えを見直す</button>`;
-  $("redo").onclick=()=>{S.q=0;go("worry")};
-  bar([{id:"b",label:"戻る",cls:"back",on:back},{id:"n",label:"道のりを見る",cls:"primary",on:()=>go("route")}]);
+   <h2>答えた内容</h2>
+   ${answerList(QS.length,true)}
+   <p class="small">直すと、道のりも作り直します。</p>`;
+  bindEdits();
+  bar([{id:"b",label:backLabel(),cls:"back",on:back},{id:"n",label:"道のりを見る",cls:"primary",on:()=>{S.open=S.step;go("route")}}]);
 },
 route(){
-  const r=route();const left=r.length-S.step;
+  const r=route();const allDone=S.step>=r.length;
   $("screen").innerHTML=`
    <p class="qno">あなたの道のり</p>
-   <h1>${S.step>=r.length?"すべて終わりました":`つぎは、${r[S.step][0]}`}</h1>
-   <p class="small">${S.step>=r.length?"お疲れさまでした。":`あと${left}つ。自分のペースで進めて大丈夫です。`}</p>
-   <ol class="line">${r.map((s,i)=>{const st=i<S.step?"done":i===S.step?"now":"";return `<li class="${st}"><span class="dot">${i<S.step?"✓":i+1}</span><div class="st"><b>${s[0]}</b><span class="small">${i<S.step?"できました":i===S.step?"いまここ・"+s[2]+"ほど":s[2]+"ほど"}</span></div></li>`}).join("")}</ol>
-   ${SAVE}`;
-  bar(S.step>=r.length
-    ?[{id:"b",label:"戻る",cls:"back",on:back},{id:"n",label:"銀行の人に相談する",cls:"primary",on:()=>{S.from="route";go("book")}}]
-    :[{id:"b",label:"戻る",cls:"back",on:back},{id:"n",label:"この一歩をはじめる",cls:"primary",on:()=>go("step")}]);
-},
-step(){
-  const s=route()[S.step];const last=S.step===route().length-1;
-  $("screen").innerHTML=`
-   <p class="qno">一歩め：${S.step+1} / ${route().length}</p>
-   <h1>${s[0]}</h1>
-   <div class="card"><dl class="dl"><dt>用意するもの</dt><dd>${s[1]}</dd><dt>時間</dt><dd>${s[2]}ほど</dd><dt>終わりの目安</dt><dd>${s[3]}</dd></dl></div>
-   <p class="small">途中でやめても大丈夫です。次に開いたとき、ここから始まります。</p>
-   <button type="button" class="link" id="line">続きをLINEで受け取る</button>`;
-  $("line").onclick=()=>go("line");
-  bar(last
-    ?[{id:"b",label:"戻る",cls:"back",on:back},{id:"n",label:"相談を予約する",cls:"primary",on:()=>{S.from="step";go("book")}}]
-    :[{id:"b",label:"戻る",cls:"back",on:back},{id:"n",label:"できた",cls:"primary",on:()=>{S.step++;go("cheer")}}]);
-},
-cheer(){
-  const r=route();
-  $("screen").innerHTML=`
-   <span class="done-badge">✓ 一歩すすみました</span>
-   <h1>できましたね</h1>
-   <p class="lead">次は「${r[S.step][0]}」です。今日はここまでにしても大丈夫です。</p>`;
-  bar([{id:"n",label:"道のりに戻る",cls:"primary",on:()=>go("route")}],"進んだところは保存されています");
+   <h1>${allDone?"すべて終わりました":`つぎは、${plain(r[S.step][0])}`}</h1>
+   <p class="small">${allDone?"お疲れさまでした。書いたメモはこの画面でいつでも見られます。":`あと${r.length-S.step}つ。各ステップを押すと中身が開きます。`}</p>
+   <ol class="road">${r.map((s,i)=>{
+     const st=i<S.step?"done":i===S.step?"now":"";const open=S.open===i;const memo=S.memos[i]||"";
+     return `<li class="${st}"><span class="dot" aria-hidden="true">${i<S.step?"✓":i+1}</span><div style="min-width:0">
+      <button type="button" class="acc" aria-expanded="${open}" data-i="${i}"><span><b>${plain(s[0])}</b><span class="small">${i<S.step?"できました":i===S.step?"いまここ・"+s[2]+"ほど":s[2]+"ほど"}</span></span><span class="chev">${open?"閉じる ▲":"開く ▼"}</span></button>
+      ${S.flash&&i===S.step&&!open?"":""}
+      ${open?`<div class="panel">
+        ${S.flash&&i===S.step?`<p class="flash" role="status">✓ ${S.flash}</p>`:""}
+        <dl class="dl"><dt>やること</dt><dd>${rich(s[0])}</dd><dt>用意するもの</dt><dd>${rich(s[1])}</dd><dt>時間</dt><dd>${s[2]}ほど</dd><dt>終わりの目安</dt><dd>${rich(s[3])}</dd></dl>
+        ${s[4]?`<label for="memo${i}" style="font-weight:700;font-size:16px">ここに書けます（書いた内容は保存されます）</label><textarea id="memo${i}" data-i="${i}" placeholder="${esc(s[4])}">${esc(memo)}</textarea><span class="saved" id="sv${i}">${memo?"保存しました":""}</span>`:(memo?`<div class="memo">${esc(memo)}</div>`:"")}
+        ${i===S.step?(i===r.length-1?`<button type="button" class="btn primary" id="doBook">相談を予約する</button>`:`<button type="button" class="btn primary" id="doDone">できた</button><button type="button" class="link" id="doLine">続きをLINEで受け取る</button>`):""}
+        ${i<S.step?`<button type="button" class="link" data-undo="${i}">まだできていなかった（ここに戻る）</button>`:""}
+      </div>`:(memo&&i<S.step?`<div class="memo" style="margin-top:6px">${esc(memo)}</div>`:"")}
+     </div></li>`}).join("")}</ol>
+   ${SAVE()}`;
+  bindTerms($("screen"));
+  document.querySelectorAll(".acc").forEach(b=>b.onclick=()=>{const i=+b.dataset.i;S.open=S.open===i?-1:i;S.flash="";V.route()});
+  document.querySelectorAll("textarea").forEach(t=>t.oninput=()=>{S.memos[t.dataset.i]=t.value;persist();const s=$("sv"+t.dataset.i);if(s)s.textContent="保存しました"});
+  document.querySelectorAll("[data-undo]").forEach(b=>b.onclick=()=>{S.step=+b.dataset.undo;S.open=S.step;S.flash="";persist();V.route()});
+  if($("doDone"))$("doDone").onclick=()=>{const done=plain(r[S.step][0]);S.step++;S.open=S.step;S.flash=`「${done}」ができました。次はこちらです`;persist();V.route();const el=document.querySelector(".now");if(el)el.scrollIntoView({block:"center",behavior:"smooth"})};
+  if($("doBook"))$("doBook").onclick=()=>go("book");
+  if($("doLine"))$("doLine").onclick=()=>go("line");
+  bar([{id:"b",label:backLabel(),cls:"back",on:back},{id:"n",label:"担当者に相談する",cls:"primary",on:()=>go("book")}],"相談すると、この道のりとメモを担当者に伝えられます");
 },
 book(){
-  const main=wById(S.worries[0]);const r=route();
+  const r=route();const has=S.worries.length>0;const memoCount=Object.values(S.memos).filter(Boolean).length;
   $("screen").innerHTML=`
-   <p class="qno">人に聞く</p>
-   <h1>最初から説明しなくて<br>大丈夫です</h1>
-   <p class="lead">ここまでの内容を担当者に伝えてから、お話しできます。</p>
-   <div class="card"><h2 style="font-size:17px;margin-bottom:8px">担当者に伝わる内容</h2>
-    <dl class="dl"><dt>気になること</dt><dd>${main.short}</dd><dt>いまの場所</dt><dd>${Math.min(S.step+1,r.length)} / ${r.length}「${r[Math.min(S.step,r.length-1)][0]}」</dd><dt>一緒に考える人</dt><dd>${S.ans.q0||"未回答"}</dd></dl></div>
+   <p class="qno">担当者に相談</p>
+   <h1>銀行の担当者と話す<br>予約ができます</h1>
+   <p class="lead">${has?"ここまでの内容を先に伝えておくので、最初から説明しなくて大丈夫です。":"何から聞けばいいか分からなくても大丈夫です。担当者が一緒に整理します。"}相談は無料です。</p>
+   ${has?`<div class="card"><h2 style="font-size:17px;margin-bottom:8px">担当者に伝わる内容</h2>
+    <dl class="dl"><dt>気になること</dt><dd>${S.worries.map(id=>wById(id).short).join("、")}</dd><dt>いまの場所</dt><dd>${Math.min(S.step+1,r.length)} / ${r.length}「${plain(r[Math.min(S.step,r.length-1)][0])}」</dd><dt>答えた内容</dt><dd>${QS.map((x,i)=>S.ans["q"+i]?x.short+"："+S.ans["q"+i]:"").filter(Boolean).join("／")||"なし"}</dd><dt>書いたメモ</dt><dd>${memoCount?memoCount+"件":"なし"}</dd></dl></div>`:""}
    ${S.err?`<p class="err" role="alert">${S.err}</p>`:""}
    <p style="font-weight:700">相談の方法を選んでください</p>
-   <div class="choice">${["電話で話す","お店で話す","LINEで聞く"].map(c=>`<button type="button" class="opt round" aria-pressed="${S.contact===c}" data-c="${c}"><span class="box">●</span><span>${c}</span></button>`).join("")}</div>
-   <label class="consent" for="ok"><input type="checkbox" id="ok" ${S.consent?"checked":""}>上の内容を担当者に伝えることに同意します</label>
+   <div class="choice">${[["電話で話す","担当者から電話します"],["お店で話す","近くの店舗で、日時を決めて"],["LINEで聞く","文字で気軽に"]].map(([c,d])=>`<button type="button" class="opt round" aria-pressed="${S.contact===c}" data-c="${c}"><span class="box">●</span><span>${c}<br><span class="small">${d}</span></span></button>`).join("")}</div>
+   ${has?`<label class="consent" for="ok"><input type="checkbox" id="ok" ${S.consent?"checked":""}>上の内容を担当者に伝えることに同意します</label>`:""}
    <p class="note">試作品のため、実際の予約は行われません。</p>`;
   document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{S.contact=b.dataset.c;S.err="";V.book()});
-  $("ok").onchange=e=>{S.consent=e.target.checked;S.err=""};
-  bar([{id:"b",label:"戻る",cls:"back",on:back},{id:"n",label:"この内容で予約する",cls:"primary",on:()=>{
+  if($("ok"))$("ok").onchange=e=>{S.consent=e.target.checked;S.err=""};
+  bar([{id:"b",label:backLabel(),cls:"back",on:back},{id:"n",label:"この内容で予約する",cls:"primary",on:()=>{
     if(!S.contact){S.err="相談の方法を1つ選んでください。";V.book();return}
-    if(!S.consent){S.err="担当者に伝えてよいか、チェックを入れてください。";V.book();return}
+    if(has&&!S.consent){S.err="担当者に伝えてよいか、チェックを入れてください。";V.book();return}
     go("booked")}}]);
 },
 booked(){
   $("screen").innerHTML=`
-   <span class="done-badge">✓ 予約を受け付けました（試作）</span>
+   <p class="flash">✓ 予約を受け付けました（試作）</p>
    <h1>担当者から<br>ご連絡します</h1>
-   <div class="card"><dl class="dl"><dt>方法</dt><dd>${S.contact}</dd><dt>伝わる内容</dt><dd>気になること・いまの場所・答えた内容</dd></dl></div>
-   <p class="lead">相談の日まで、道のりはそのまま残ります。</p>`;
-  bar([{id:"n",label:"道のりに戻る",cls:"primary",on:()=>go("route")}]);
+   <div class="card"><dl class="dl"><dt>方法</dt><dd>${S.contact}</dd><dt>伝わる内容</dt><dd>${S.worries.length?"気になること・いまの場所・答えた内容・メモ":"なし（担当者が一緒に整理します）"}</dd></dl></div>
+   <p class="lead">相談の日まで、道のりとメモはそのまま残ります。</p>`;
+  bar([{id:"n",label:S.worries.length?"道のりに戻る":"はじめの画面へ",cls:"primary",on:()=>{S.hist=[];S.screen=S.worries.length?"route":"home";render()}}]);
 },
 line(){
   $("screen").innerHTML=`
@@ -247,17 +307,31 @@ line(){
    <h1>次の一歩を<br>LINEでお知らせします</h1>
    <div class="card"><dl class="dl"><dt>届く内容</dt><dd>次にやることと、道のりへの入口</dd><dt>頻度</dt><dd>週に1回まで。いつでも止められます</dd></dl></div>
    <p class="note">試作品のため、実際の登録は行われません。</p>`;
-  bar([{id:"b",label:"戻る",cls:"back",on:back},{id:"n",label:"友だち追加する（試作）",cls:"primary",on:back}]);
+  bar([{id:"b",label:backLabel(),cls:"back",on:back},{id:"n",label:"友だち追加する（試作）",cls:"primary",on:back}]);
 },
-ask(){
+map(){
   $("screen").innerHTML=`
-   <p class="qno">人に聞く</p>
-   <h1>迷ったら、いつでも<br>人に聞けます</h1>
-   <p class="lead">${S.worries.length?"ここまでの内容を担当者に伝えてから、お話しできます。":"何から聞けばいいか分からなくても大丈夫です。担当者が一緒に整理します。"}</p>`;
-  bar([{id:"b",label:"戻る",cls:"back",on:back},{id:"n",label:"相談を予約する",cls:"primary",on:()=>{if(!S.worries.length)S.worries=["talk"];S.from="ask";S.screen="book";S.err="";render()}}]);
+   <p class="qno">確認用</p>
+   <h1>画面マップ</h1>
+   <div class="card map"><ol>
+    <li>はじめの画面（続きがあれば「続きから始める」）
+      <div class="br">分岐：自分で調べる → 既存のやることリスト（変更なし）</div></li>
+    <li>気になることを選ぶ（複数可。最初に選んだものが道のりを決める）</li>
+    <li>質問1〜3（1画面1問。いつでも前の答えを直せる）</li>
+    <li>お話を整理しました（答えの一覧から直せる → 直すと道のりを作り直す）</li>
+    <li>あなたの道のり（4ステップ。各ステップを開くと中身・メモ・「できた」）
+      <div class="br">各ステップから：LINEで続きを受け取る</div>
+      <div class="br">最後のステップ・下のボタン：担当者に相談</div></li>
+    <li>担当者に相談（伝わる内容を確認 → 方法を選ぶ → 同意 → 予約完了）</li>
+   </ol>
+   <p style="margin-top:10px">右上の「担当者に相談」は、どの画面からでも 6 に進めます。</p></div>
+   <div class="card map"><p style="font-weight:700">気になること → 道のり（4ステップ）</p>
+    ${WORRIES.map(w=>`<p style="margin-top:8px"><b>${w.label}</b></p><ol>${ROUTES[w.id].map(s=>`<li>${plain(s[0])}</li>`).join("")}</ol>`).join("")}
+   </div>`;
+  bar([{id:"b",label:backLabel(),cls:"back",on:back}]);
 }
 };
 function render(){(V[S.screen]||V.home)();}
-$("askBtn").onclick=()=>{if(S.screen!=="ask"&&S.screen!=="book")go("ask")};
+$("askBtn").onclick=()=>{if(S.screen!=="book")go("book")};
 render();
 </script>
