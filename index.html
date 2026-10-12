@@ -132,6 +132,18 @@ textarea{font:inherit;font-size:18px;width:100%;min-height:120px;border:3px soli
 .crumb{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:15px}
 @media (min-width:900px){body.wide-route .layout{grid-template-columns:minmax(0,1fr)}}
 .seg-now{font-weight:700;color:var(--accent-ink)}
+.phase{list-style:none;display:flex;gap:8px;flex-wrap:wrap;padding:0;margin:4px 0 0}
+.phase li{display:flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--card);font-size:15px;color:var(--sub)}
+.phase li.now{border:2px solid var(--accent);color:var(--fg);font-weight:700}
+.phase li.done .dot.sm{border-color:var(--ok);background:var(--ok);color:var(--card)}
+.phase li.now .dot.sm{border-color:var(--accent);background:var(--accent);color:var(--card)}
+.phase em{font-style:normal;font-size:12px;background:var(--accent);color:var(--card);border-radius:999px;padding:1px 8px}
+.phaserow{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:4px}
+.consult{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border:1px dashed var(--accent);border-radius:16px;padding:10px 14px;background:var(--card);text-align:left}
+.consult p{margin:0;display:flex;flex-direction:column;gap:4px}
+.consult-btns{display:flex;gap:8px;flex-wrap:wrap}
+.nextphase{border:2px solid var(--accent)}
+@media (max-width:600px){.consult .small{display:none}.consult{padding:10px 12px}}
 .seg{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .hwrap{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center}
 .hscroll{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x proximity;scroll-padding-left:10%;padding:6px 2px 14px}
@@ -400,7 +412,7 @@ summary(){
    <h1>一人でやることは<br>${self}つです</h1>
    <div class="card"><p>まずは「${plain(selfSteps(r)[0].t)}」から始めましょう。${selfSteps(r)[0].time}ほどで終わります。</p>
    <p class="small">どれも、この画面の中で終わります。</p></div>
-   <div class="card"><p style="font-weight:700">この先の流れ</p><ol class="agenda"><li>一人で、やることを進める（${self}つ）</li><li>家族がそろう日に、ノートを一緒に開いて話す</li><li>必要なら、家族で銀行や専門家に相談する</li></ol><p class="small">一人で決められなかったことは「家族と話すこと」にたまっていきます。</p></div>
+   <div class="card"><p style="font-weight:700">この先の流れ</p><ol class="agenda"><li>一人で、エンディングノートを書く（${self}つ）</li><li>書き終わったら、家族がそろう日を決めて、ノートを一緒に開く</li></ol><p class="small">一人で決められなかったことは「家族と話すこと」にたまっていきます。<br>銀行の相談員や専門家には、途中でもいつでも相談できます。</p></div>
    <div class="notecard"><div><p style="font-weight:700">終わると、エンディングノートに書き込まれます</p><p class="small">「${pages.join("」「")}」のページ</p></div></div>
    ${S.worries.length>1?`<p class="small">ほかに選んだ「${S.worries.slice(1).map(x=>wById(x).short).join("」「")}」は、これが終わったらご案内します。</p>`:""}`;
   bar([{id:"b",label:backLabel(),cls:"back",on:back},{id:"n",label:"やることを見る",cls:"primary",on:()=>show("route")}]);
@@ -412,32 +424,34 @@ route(){
   const pc=window.matchMedia&&window.matchMedia("(min-width:900px)").matches;const L=pc?(S.pcLayout||"a"):"v";
   const famTitle=planDone()?`${planTitle()}に、家族とノートを開いて話す`:"家族がそろう日を決めて、ノートを一緒に開いて話す";
   const famBody=done?`<div class="work">${planDone()?`<p>話したいことは決めてあります（${(S.plan.topics||[]).length}件）。</p><button type="button" class="btn primary wide" id="goTogether">家族と一緒に開く<small>当日はこちら</small></button><button type="button" class="btn wide" id="goPlan">計画を見る</button>`:`<p>${tl.length?`「家族と話すこと」が${tl.length}件たまっています${asks?`（うち一緒に考えたいこと${asks}件）`:""}。`:""}家族がそろう日を決めて、誘いましょう。</p><button type="button" class="btn primary wide" id="goGather">家族がそろう日を決める<small>旅行・帰省・お祝い</small></button>`}</div>`:`<span class="small">一人でやることが終わったら、ここで家族がそろう日を決めます。${tl.length?`それまでに「家族と話すこと」がたまっていきます。`:""}</span>`;
-  const conTitle=hs?`必要なら、家族で${plain(hs.t).replace(/^(銀行の相談員に、|銀行の相談員と、)/,"銀行の相談員や専門家と、")}`:"";
-  const conBody=hs?`<div class="work later"><p>話すことは、ノートと「家族と話すこと」から用意します。</p><button type="button" class="btn wide" id="doBook">銀行の相談員に相談する<small>無料・話すことを用意して予約</small></button>${hs.pro&&hs.pro.length?`<button type="button" class="btn wide" id="doPro">${hs.pro.join("・")}を探す<small>そうぞくガイドの専門家さがし</small></button>`:""}</div>`:"";
   const status=(s,i)=>S.done[s.id]?"終わりました":i===cur?`いまここ・${s.time}ほど・${KIND[s.k]}`:`このあと・${s.time}ほど・${KIND[s.k]}`;
   const goes=s=>s.page?`<span class="goes">ノートの「${pageName(s.page)}」に${S.done[s.id]?"書きました":"書き込まれます"}</span>`:"";
   const stops=[...ss.map((s,i)=>({key:"s"+i,no:i+1,title:plain(s.t),st:S.done[s.id]?"done":i===cur?"now":"",sub:status(s,i),extra:goes(s),body:i===cur?work(s):""})),
-    {key:"fam",no:ss.length+1,title:famTitle,st:done?"now":"",sub:(done?"いまここ・":"")+"家族旅行や帰省など、家族がそろうときに",extra:"",body:famBody},
-    ...(hs?[{key:"con",no:ss.length+2,title:conTitle,st:"",sub:`家族と話したあとがおすすめ・${KIND.human}`,extra:"",body:conBody}]:[])];
+  ];
+  const phase=`<ol class="phase" aria-label="進み方"><li class="${done?"done":"now"}"><span class="dot sm" aria-hidden="true">${done?"✓":"1"}</span>ノートを書く${done?"":"<em>いまここ</em>"}</li><li class="${done?"now":""}"><span class="dot sm" aria-hidden="true">2</span>家族がそろう日を決める${done?"<em>いまここ</em>":""}</li></ol>`;
+  const proList=(hs&&hs.pro&&hs.pro.length)?hs.pro:[];
+  const consult=`<div class="consult" role="region" aria-label="いつでも相談できます"><p><b>迷ったら、いつでも相談できます</b><span class="small">途中でも大丈夫。書いたノートから話すことを用意します</span></p><div class="consult-btns"><button type="button" class="btn sm" id="doBook">銀行の相談員に相談する<small>無料・電話/お店/LINE</small></button>${proList.length?`<button type="button" class="btn sm" id="doPro">${proList.join("・")}を探す<small>専門家さがし</small></button>`:""}</div></div>`;
+  const nextPhase=done?`<section class="card nextphase"><p class="qno">次のフェーズ：家族がそろう日を決める</p>${famBody.replace('<div class="work">','<div>')}</section>`:"";
   const head=`
    ${pc?`<div class="seg" role="group" aria-label="PCの並べ方（比較用）"><span class="small">PCの並べ方（比較用）：いまは <span class="seg-now">${L==="a"?"A 横スクロール":"B 全体図"}</span></span><button type="button" class="chip" aria-pressed="${L==="a"}" data-lay="a">A 横スクロール</button><button type="button" class="chip" aria-pressed="${L==="b"}" data-lay="b">B 全体図</button></div>`:""}
    <p class="qno">あなたのやること：${wById(w).short}</p>
-   <h1>${done?"一人でできることは<br>終わりました。<br>次は、家族と話しましょう":`いまやることは<br>「${plain(ss[cur].t)}」`}</h1>
+   <div class="phaserow">${phase}${consult}</div>
+   <h1>${done?"ノートが書けました。<br>次は、家族がそろう日を決めましょう":`いまやることは<br>「${plain(ss[cur].t)}」`}</h1>
    ${S.flash?`<p class="flash" role="status">✓ ${S.flash}${S.lastDone?`<button type="button" class="undo" id="undo">取り消す</button>`:""}</p>`:""}
    ${tl.length?`<div class="card talkbox"><p style="font-weight:700">家族と話すこと（${tl.length}件）</p><ul class="talklist">${tl.map(x=>`<li><span class="tag ${x.kind}">${x.kind==="ask"?"一緒に考えたい":"伝えたい"}</span>${esc(x.text)}${x.talked?" ✓":""}</li>`).join("")}</ul></div>`:""}`;
-  let body="";
+  let body=nextPhase;
   if(L==="v"){
-    body=`<ol class="road">${stops.map(o=>`<li class="${o.st}" id="st_${o.key}"><span class="dot" aria-hidden="true">${o.st==="done"?"✓":o.no}</span><div class="st" style="min-width:0"><b>${o.title}</b><span class="small">${o.sub}</span>${o.extra}${o.body}</div></li>`).join("")}</ol>`;
+    body+=`<ol class="road">${stops.map(o=>`<li class="${o.st}" id="st_${o.key}"><span class="dot" aria-hidden="true">${o.st==="done"?"✓":o.no}</span><div class="st" style="min-width:0"><b>${o.title}</b><span class="small">${o.sub}</span>${o.extra}${o.body}</div></li>`).join("")}</ol>`;
   }else if(L==="a"){
-    body=`<div class="hwrap"><button type="button" class="btn sm" id="hPrev" aria-label="前のカードへ">← 前</button>
+    body+=`<div class="hwrap"><button type="button" class="btn sm" id="hPrev" aria-label="前のカードへ">← 前</button>
       <div class="hscroll" id="hs" tabindex="0" aria-label="やることのカード（横に並んでいます）">${stops.map(o=>`<section class="hcard ${o.st}" id="card_${o.key}"><p class="small"><span class="dot sm" aria-hidden="true">${o.st==="done"?"✓":o.no}</span> ${o.no} / ${stops.length}</p><b>${o.title}</b><span class="small">${o.sub}</span>${o.extra}${o.body}</section>`).join("")}</div>
       <button type="button" class="btn sm" id="hNext" aria-label="次のカードへ">次 →</button></div>
       <p class="small">「← 前」「次 →」で、カードを横に送れます。</p>`;
   }else{
     const now=stops.find(o=>o.st==="now");
-    body=`<ol class="overview" aria-label="やることの全体">${stops.map(o=>`<li class="${o.st}"><span class="dot" aria-hidden="true">${o.st==="done"?"✓":o.no}</span><span class="ovt">${o.title}</span></li>`).join("")}</ol>
+    body+=`<ol class="overview" aria-label="やることの全体">${stops.map(o=>`<li class="${o.st}"><span class="dot" aria-hidden="true">${o.st==="done"?"✓":o.no}</span><span class="ovt">${o.title}</span></li>`).join("")}</ol>
       ${now?`<section class="nowbox"><p class="qno">いまやること（${now.no} / ${stops.length}）</p><h2>${now.title}</h2><span class="small">${now.sub}</span>${now.extra}${now.body}</section>`:""}
-      ${hs&&now&&now.key!=="con"?`<section class="card"><b>${conTitle}</b><span class="small">家族と話したあとがおすすめ</span>${conBody}</section>`:""}`;
+`;
   }
   $("screen").innerHTML=head+body+`
    <div class="notecard"><div><p style="font-weight:700">わたしのエンディングノート</p><p class="small">${filledPages()}ページ書き込みました</p></div><div style="display:flex;flex-direction:column;gap:8px"><button type="button" class="btn sm" id="openNote">ノートを見る</button></div></div>
@@ -451,7 +465,7 @@ route(){
   if($("goPlan"))$("goPlan").onclick=()=>show("plan");
   if($("goGather"))$("goGather").onclick=()=>{S.gi=0;show("gather")};
   if($("doBook"))$("doBook").onclick=()=>show("book");
-  if($("doPro"))$("doPro").onclick=()=>{S.proFor=hs.pro;show("pro")};
+  if($("doPro"))$("doPro").onclick=()=>{S.proFor=proList;show("pro")};
   if($("undo"))$("undo").onclick=()=>{const id=S.lastDone;delete S.done[id];delete S.notes[id];delete S.talk[id];S.flash="";S.lastDone=null;persist();render()};
   if($("nextW"))$("nextW").onclick=()=>{S.worries=[nextW,...S.worries.filter(x=>x!==nextW)];S.flash="";S.lastDone=null;persist();show("route")};
   bar([{id:"b",label:backLabel(),cls:"back",on:back},{id:"n",label:"ノートを家族に渡す<small>LINE・印刷</small>",cls:"",on:()=>show("send")}]);
