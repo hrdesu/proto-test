@@ -123,7 +123,6 @@ textarea{font:inherit;font-size:18px;width:100%;min-height:120px;border:3px soli
 .bigmode h1{font-size:30px}
 .talk{border:2px solid var(--accent)}
 .talkq{font-family:var(--display);font-size:24px;line-height:1.5}
-.road>li:first-child .dot{border-color:var(--ok);background:var(--ok);color:var(--card)}
 .agenda{margin:0;padding-left:1.3em}
 .agenda li{margin:4px 0}
 .consent{display:flex;gap:12px;align-items:flex-start;font-size:16px}
@@ -286,7 +285,7 @@ let ovTimer=null;
 function cue(main,sub){const o=$("ov");$("ovMain").textContent=main;$("ovSub").textContent=sub||"";o.hidden=false;o.classList.remove("show");void o.offsetWidth;o.classList.add("show");clearTimeout(ovTimer);ovTimer=setTimeout(()=>{o.hidden=true;o.classList.remove("show")},1300)}
 function cueFor(name){
   if(name==="q"){const n=qList().length;return S.qi===0?["気になることを選びます","はじめに"]:[`質問 ${S.qi} / ${n}`,"次の質問です"]}
-  return ({summary:["やることを整理しました","答え終わりました"],route:["次は、ここです","あなたの行程"],together:["家族と一緒に開く","旅行や帰省で、家族がそろったときに"],note:["エンディングノート","画面が変わりました"],send:["家族に渡す","画面が変わりました"],book:["銀行に相談する","画面が変わりました"],pro:["専門家を探す","画面が変わりました"],home:["はじめの画面","画面が変わりました"],self:["自分で調べる","画面が変わりました"],map:["画面マップ","確認用"]})[name]||["",""];
+  return ({summary:["やることを整理しました","答え終わりました"],route:["あなたのやること","画面が変わりました"],together:["家族と一緒に開く","旅行や帰省で、家族がそろったときに"],note:["エンディングノート","画面が変わりました"],send:["家族に渡す","画面が変わりました"],book:["銀行に相談する","画面が変わりました"],pro:["専門家を探す","画面が変わりました"],home:["はじめの画面","画面が変わりました"],self:["自分で調べる","画面が変わりました"],map:["画面マップ","確認用"]})[name]||["",""];
 }
 function toolText(s){
   if(s.tool==="heirs"){const h=heirs(S.ans);return h.n?`法定相続人は ${h.n}人${h.approx?"以上":""}（${h.who}）`:h.who}
@@ -304,7 +303,7 @@ home(){
   const has=S.worries.length>0;
   $("screen").innerHTML=`
    <h1>相続の準備、<br>何から始めればいいか<br>一緒に整理しましょう</h1>
-   <p class="lead">気になっていることを選び、いくつかの質問に答えると、あなたがやることを順番にお伝えします。旅の計画のように、次に行くところを1つずつお伝えします。やったことは「わたしのエンディングノート」に書き込まれ、旅行や帰省で家族がそろったときに一緒に開けます。</p>
+   <p class="lead">気になっていることを選び、いくつかの質問に答えると、あなたがやることを順番にお伝えします。あなたがやることを1つずつお伝えします。やったことは「わたしのエンディングノート」に書き込まれ、旅行や帰省で家族がそろったときに一緒に開けます。</p>
    <div class="card"><dl class="dl"><dt>かかる時間</dt><dd>はじめは3分ほど</dd><dt>入力するもの</dt><dd>名前や口座番号は不要です</dd><dt>途中でやめたら</dt><dd>このiPadで、続きから始められます</dd></dl></div>
    ${has?`<div class="notecard"><div><p style="font-weight:700">わたしのエンディングノート</p><p class="small">書き込んだページがあります</p></div><span class="pages">${filledPages()}/${PAGES.length}</span></div>`:""}
    ${S.confirmReset?`<div class="inline-confirm" role="alert">これまでの答えとノートを消して、最初から始めますか？<button type="button" class="btn sm" id="rsY">消して始める</button><button type="button" class="btn sm" id="rsN">やめる</button></div>`:(has?`<button type="button" class="link" id="reset">最初からやり直す</button>`:"")}
@@ -351,7 +350,6 @@ summary(){
   $("screen").innerHTML=`
    <p class="qno">答えていただいた内容から</p>
    <h1>あなたがやることは<br>${r.length}つです</h1>
-   <p class="lead">旅の計画のように、次に行くところを1つずつお伝えします。</p>
    <div class="card"><p>まずは「${plain(r[0].t)}」から始めましょう。${r[0].time}ほどで終わります。</p>
    <p class="small">${self}つは、この画面の中で終わります。${r.length-self?`最後の1つは、人に相談します。`:""}</p></div>
    <div class="notecard"><div><p style="font-weight:700">終わると、エンディングノートに書き込まれます</p><p class="small">「${pages.join("」「")}」のページ</p></div></div>
@@ -362,15 +360,15 @@ route(){
   const w=S.worries[0];const all=routeOf(w);const cur=curIndex(all);const done=cur>=all.length;
   const nextW=S.worries.find(x=>x!==w&&curIndex(routeOf(x))<routeOf(x).length);
   $("screen").innerHTML=`
-   <p class="qno">あなたの行程：${wById(w).short}</p>
-   <h1>${done?"ここまで、すべて終わりました":`次は、ここです<br>「${plain(all[cur].t)}」`}</h1>
+   <p class="qno">あなたのやること：${wById(w).short}</p>
+   <h1>${done?"ここまで、すべて終わりました":`いまやることは<br>「${plain(all[cur].t)}」`}</h1>
    ${S.flash?`<p class="flash" role="status">✓ ${S.flash}${S.lastDone?`<button type="button" class="undo" id="undo">取り消す</button>`:""}</p>`:""}
-   <ol class="road"><li class="done"><span class="dot" aria-hidden="true">✓</span><div class="st"><b>出発：気になることを整理しました</b><span class="small">${S.worries.map(x=>wById(x).short).join("、")}</span></div></li>${all.map((s,i)=>{const st=S.done[s.id]?"done":i===cur?"now":"";
+   <ol class="road">${all.map((s,i)=>{const st=S.done[s.id]?"done":i===cur?"now":"";
      return `<li class="${st}" id="st${i}"><span class="dot" aria-hidden="true">${S.done[s.id]?"✓":i+1}</span><div class="st" style="min-width:0">
        <b>${plain(s.t)}</b><span class="small">${S.done[s.id]?"終わりました":i===cur?`いまここ・${s.time}ほど・${KIND[s.k]}`:`このあと・${s.time}ほど・${KIND[s.k]}`}</span>
        ${s.page?`<span class="goes">ノートの「${pageName(s.page)}」に${S.done[s.id]?"書きました":"書き込まれます"}</span>`:""}
        ${i===cur?work(s):""}
-     </div></li>`}).join("")}<li class="${done?"now":""}"><span class="dot" aria-hidden="true">着</span><div class="st"><b>到着：ノートを家族と一緒に開く</b><span class="small">旅行や帰省で、家族がそろったときに</span>${done?`<div class="work"><p>ここまでの行程で、ノートに${filledPages()}ページ書き込みました。次に家族と会うとき、一緒に開いてみましょう。</p><button type="button" class="btn primary wide" id="goTogether">家族と一緒に開く</button></div>`:""}</div></li></ol>
+     </div></li>`}).join("")}<li class="${done?"now":""}"><span class="dot" aria-hidden="true">${all.length+1}</span><div class="st"><b>ノートを家族と一緒に開く</b><span class="small">旅行や帰省で、家族がそろったときに</span>${done?`<div class="work"><p>ここまでで、ノートに${filledPages()}ページ書き込みました。次に家族と会うとき、一緒に開いてみましょう。</p><button type="button" class="btn primary wide" id="goTogether">家族と一緒に開く</button></div>`:""}</div></li></ol>
    <div class="notecard"><div><p style="font-weight:700">わたしのエンディングノート</p><p class="small">${filledPages()}ページ書き込みました</p></div><div style="display:flex;flex-direction:column;gap:8px"><button type="button" class="btn sm" id="openNote">ノートを見る</button><button type="button" class="btn sm" id="openTogether">家族と開く</button></div></div>
    ${done&&nextW?`<div class="card"><p style="font-weight:700">次は「${wById(nextW).short}」に進めます</p><button type="button" class="btn primary wide" id="nextW">こちらを始める</button></div>`:""}`;
   bindWork(all,cur);
@@ -386,7 +384,7 @@ note(){
   $("screen").innerHTML=`
    <p class="qno">このiPadの中のノート</p>
    <h1>わたしの<br>エンディングノート</h1>
-   <p class="lead">やることを終えるたびに、ここに書き込まれます。家族に渡す、旅のしおりのような一冊です。もしものときに、家族が困りません。</p>
+   <p class="lead">やることを終えるたびに、ここに書き込まれます。家族に渡す一冊です。もしものときに、家族が困りません。</p>
    ${PAGES.map(([p,name])=>{const es=Object.entries(S.notes).filter(([,n])=>n.page===p);
      return `<section class="page ${es.length?"":"empty"}"><h2>${name}</h2>${es.length?es.map(([,n])=>`<div class="entry"><b>${esc(n.label)}</b>${esc(n.text)}</div>`).join(""):`<p class="small">まだ書いていません</p>`}</section>`}).join("")}`;
   bar([{id:"b",label:backLabel(),cls:"back",on:back},{id:"n",label:"家族に渡す<small>LINE・印刷</small>",cls:"primary",on:()=>show("send")},{id:"t",label:"家族と一緒に開く<small>旅行や帰省のときに</small>",cls:"",on:()=>show("together")}]);
@@ -466,7 +464,7 @@ map(){
     <li>はじめの画面（続きがあれば「続きから始める」）</li>
     <li>質問（1画面に1問。「次へ」で画面が切り替わる。「戻る」で前の質問へ）：気になること → 選んだものに関係する質問だけ</li>
     <li>整理：やることの数、最初の一歩、ノートのどのページに書き込まれるか</li>
-    <li>行程（やること）：出発 → 次は、ここ → 到着（家族と一緒に開く）。全ステップの名前は最初から見える。いまのステップだけ、その場で作業する
+    <li>やること：全ステップの名前は最初から見える（最後は「ノートを家族と一緒に開く」）。いまのステップだけ、その場で作業する
       <br>種類：書いてノートに残す／読んで、決めたことを残す／その場で分かる／人に相談する</li>
     <li>エンディングノート：8ページ。終えたステップの結果が書き込まれる → 家族に渡す（LINE・印刷・わが家ノート）</li>
     <li>家族と一緒に開く（旅行・帰省のとき）：文字を大きく、空いているページに合わせた「家族で話してみること」3つ。話したことをノートに書ける → 家族で銀行に相談</li>
