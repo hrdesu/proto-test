@@ -134,9 +134,9 @@ textarea{font:inherit;font-size:18px;width:100%;min-height:120px;border:3px soli
 .seg-now{font-weight:700;color:var(--accent-ink)}
 .seg{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .hwrap{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center}
-.hscroll{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding:6px 2px 14px}
-.hcard{flex:none;width:300px;scroll-snap-align:start;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px}
-.hcard.now{width:440px;border:2px solid var(--accent)}
+.hscroll{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x proximity;scroll-padding-left:10%;padding:6px 2px 14px}
+.hcard{flex:none;width:40%;min-width:260px;scroll-snap-align:start;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.hcard.now{width:70%;max-width:820px;border:2px solid var(--accent)}
 .hcard.done{opacity:.75}
 .hcard .work{margin-top:4px}
 .dot.sm{display:inline-grid;width:22px;height:22px;border-width:2px;font-size:12px;vertical-align:-5px}
@@ -409,7 +409,7 @@ route(){
   const w=S.worries[0];const all=routeOf(w);const ss=selfSteps(all);const hs=humanStep(all);const cur=curIndex(ss);const done=cur>=ss.length;
   const tl=topicItems();const asks=tl.filter(x=>x.kind==="ask").length;
   const nextW=S.worries.find(x=>x!==w&&curIndex(selfSteps(routeOf(x)))<selfSteps(routeOf(x)).length);
-  const pc=window.matchMedia&&window.matchMedia("(min-width:900px)").matches;const L=pc?(S.pcLayout||"b"):"v";
+  const pc=window.matchMedia&&window.matchMedia("(min-width:900px)").matches;const L=pc?(S.pcLayout||"a"):"v";
   const famTitle=planDone()?`${planTitle()}に、家族とノートを開いて話す`:"家族がそろう日を決めて、ノートを一緒に開いて話す";
   const famBody=done?`<div class="work">${planDone()?`<p>話したいことは決めてあります（${(S.plan.topics||[]).length}件）。</p><button type="button" class="btn primary wide" id="goTogether">家族と一緒に開く<small>当日はこちら</small></button><button type="button" class="btn wide" id="goPlan">計画を見る</button>`:`<p>${tl.length?`「家族と話すこと」が${tl.length}件たまっています${asks?`（うち一緒に考えたいこと${asks}件）`:""}。`:""}家族がそろう日を決めて、誘いましょう。</p><button type="button" class="btn primary wide" id="goGather">家族がそろう日を決める<small>旅行・帰省・お祝い</small></button>`}</div>`:`<span class="small">一人でやることが終わったら、ここで家族がそろう日を決めます。${tl.length?`それまでに「家族と話すこと」がたまっていきます。`:""}</span>`;
   const conTitle=hs?`必要なら、家族で${plain(hs.t).replace(/^(銀行の相談員に、|銀行の相談員と、)/,"銀行の相談員や専門家と、")}`:"";
@@ -443,8 +443,8 @@ route(){
    <div class="notecard"><div><p style="font-weight:700">わたしのエンディングノート</p><p class="small">${filledPages()}ページ書き込みました</p></div><div style="display:flex;flex-direction:column;gap:8px"><button type="button" class="btn sm" id="openNote">ノートを見る</button></div></div>
    ${done&&nextW?`<div class="card"><p style="font-weight:700">ほかに選んだ「${wById(nextW).short}」も進められます</p><button type="button" class="btn wide" id="nextW">こちらを始める</button></div>`:""}`;
   bindWork(ss,cur);
-  document.querySelectorAll("[data-lay]").forEach(b=>b.onclick=()=>{S.pcLayout=b.dataset.lay;try{localStorage.setItem(KEY+"-lay",S.pcLayout)}catch(e){};render();cue(S.pcLayout==="a"?"A 横スクロール":"B 全体図","並べ方を切り替えました")});
-  if(L==="a"){const hsEl=$("hs");const nowEl=document.querySelector(".hcard.now");if(hsEl&&nowEl)requestAnimationFrame(()=>{hsEl.scrollLeft=Math.max(0,nowEl.offsetLeft-hsEl.offsetLeft-16)});
+  document.querySelectorAll("[data-lay]").forEach(b=>b.onclick=()=>{S.pcLayout=b.dataset.lay;try{localStorage.setItem(KEY+"-lay2",S.pcLayout)}catch(e){};render();cue(S.pcLayout==="a"?"A 横スクロール":"B 全体図","並べ方を切り替えました")});
+  if(L==="a"){const hsEl=$("hs");const nowEl=document.querySelector(".hcard.now");if(hsEl&&nowEl)requestAnimationFrame(()=>{hsEl.scrollLeft=Math.max(0,nowEl.offsetLeft-hsEl.offsetLeft-Math.round(hsEl.clientWidth*.1))});
     $("hPrev").onclick=()=>hsEl.scrollBy({left:-380,behavior:RM()?"auto":"smooth"});$("hNext").onclick=()=>hsEl.scrollBy({left:380,behavior:RM()?"auto":"smooth"})}
   $("openNote").onclick=()=>show("note");
   if($("goTogether"))$("goTogether").onclick=()=>show("together");
@@ -684,7 +684,7 @@ const SUBFLOW={gather:"家族がそろう日を決める",plan:"家族がそろ�
 function crumb(){if(!SUBFLOW[S.screen]||!S.worries.length)return;$("screen").insertAdjacentHTML("afterbegin",`<nav class="crumb" aria-label="いまいる場所"><span>やること ＞ <b>${SUBFLOW[S.screen]}</b></span><button type="button" class="btn sm" id="crumbBack">やることに戻る</button></nav>`);$("crumbBack").onclick=()=>show("route")}
 function render(){side("");(V[S.screen]||V.home)();crumb();side(S.screen==="route"?"":sideFor(S.screen));document.body.classList.toggle("wide-route",S.screen==="route");if($("sideBook"))$("sideBook").onclick=()=>show("book");if($("sideTogether"))$("sideTogether").onclick=()=>show("together");}
 $("ov").onclick=()=>{$("ov").hidden=true};
-try{S.pcLayout=localStorage.getItem(KEY+"-lay")||"b"}catch(e){S.pcLayout="b"}
+try{S.pcLayout=localStorage.getItem(KEY+"-lay2")||"a"}catch(e){S.pcLayout="a"}
 if(window.matchMedia){const mq=window.matchMedia("(min-width:900px)");const rr=()=>{if(S.screen==="route")render()};mq.addEventListener?mq.addEventListener("change",rr):mq.addListener&&mq.addListener(rr)}
 $("askBtn").onclick=()=>{if(S.screen!=="book")show("book")};
 render();
