@@ -330,7 +330,7 @@ try{const raw=localStorage.getItem(KEY);if(raw){const d=JSON.parse(raw);if(d&&d.
 function persist(){try{localStorage.setItem(KEY,JSON.stringify({worries:S.worries,ans:S.ans,qi:S.qi,done:S.done,notes:S.notes,draft:S.draft,plan:S.plan,talk:S.talk}))}catch(e){}}
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const NAMES={home:"はじめの画面",gather:"家族がそろう日を決める",plan:"家族がそろう日の計画",handoff:"旅行の予約に引き継ぐ",invite:"家族を誘う",together:"家族と一緒に開く",q:"前の質問",summary:"やることの一覧",route:"やること",phase:"ノートが書けた画面",note:"エンディングノート",book:"相談の予約",pro:"専門家を探す",consult:"相談先を選ぶ画面",send:"家族に渡す",map:"画面マップ",self:"自分で調べる"};
+const NAMES={home:"はじめの画面",gather:"家族がそろう日を決める",plan:"家族がそろう日の計画",handoff:"旅行の予約に引き継ぐ",invite:"家族を誘う",together:"家族と一緒に開く",q:"前の質問",summary:"やることの一覧",route:"やること",phase:"ノートが書けた画面",note:"エンディングノート",book:"相談の予約",pro:"専門家を探す",consult:"相談先を選ぶ画面",send:"家族に渡す",wagaya:"わが家ノートに引き継ぐ",map:"画面マップ",self:"自分で調べる"};
 const PHASES=["ノートを書く","家族がそろう日を決める","ノートを一緒に開く"];
 function phaseNav(k){return `<ol class="stepnav" aria-label="進み方">${PHASES.map((p,i)=>`<li class="${i<k?"done":i===k?"now":""}"${i===k?' aria-current="step"':""}><span><span class="n">${i+1}</span> ${p}</span></li>`).join("")}</ol>`}
 function show(name,opt){S.hist.push({screen:S.screen,qi:S.qi});S.screen=name;if(opt&&opt.qi!=null)S.qi=opt.qi;S.err="";S.confirmReset=false;persist();render();window.scrollTo(0,0);const c=cueFor(name);if(c[0])cue(c[0],c[1],c[2])}
@@ -372,7 +372,7 @@ function cueFor(name){
   if(name==="gather"){const n=gSteps().length;return [`${S.gi+1} / ${n}`,"家族がそろう日を決めます"]}
   if(name==="q"){const n=qList().length;return S.qi===0?["気になることを選びます","はじめに"]:[`質問 ${S.qi} / ${n}`,"次の質問です"]}
   if(name==="phase")return ["ノートが書けました","1. ノートを書く　完了","ok"];
-  return ({summary:["やることを整理しました","答え終わりました"],route:["やること","画面が変わりました"],together:["家族と一緒に開く","3. ノートを一緒に開く"],plan:["家族がそろう日の計画","画面が変わりました"],handoff:["旅行の予約に引き継ぐ","画面が変わりました"],invite:["家族を誘う","画面が変わりました"],note:["エンディングノート","画面が変わりました"],send:["家族に渡す","画面が変わりました"],consult:["相談する","画面が変わりました"],book:["銀行の相談員に相談","画面が変わりました"],pro:["専門家を探す","画面が変わりました"],home:["はじめの画面","画面が変わりました"],self:["自分で調べる","画面が変わりました"],map:["画面マップ","確認用"]})[name]||["",""];
+  return ({summary:["やることを整理しました","答え終わりました"],route:["やること","画面が変わりました"],together:["家族と一緒に開く","3. ノートを一緒に開く"],plan:["家族がそろう日の計画","画面が変わりました"],handoff:["旅行の予約に引き継ぐ","画面が変わりました"],invite:["家族を誘う","画面が変わりました"],note:["エンディングノート","画面が変わりました"],send:["家族に渡す","画面が変わりました"],wagaya:["わが家ノートに引き継ぐ","画面が変わりました"],consult:["相談する","画面が変わりました"],book:["銀行の相談員に相談","画面が変わりました"],pro:["専門家を探す","画面が変わりました"],home:["はじめの画面","画面が変わりました"],self:["自分で調べる","画面が変わりました"],map:["画面マップ","確認用"]})[name]||["",""];
 }
 function toolText(s){
   if(s.tool==="heirs"){const h=heirs(S.ans);return h.n?`法定相続人は ${h.n}人${h.approx?"以上":""}（${h.who}）`:h.who}
@@ -591,7 +591,18 @@ send(){
    </div>
    <p class="note">試作品のため、実際の送信・印刷は行われません。</p>`;
   document.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>{S.sendBy=b.dataset.s;S.err="";V.send()});
-  bar([{id:"n",label:"渡す",cls:"primary",on:()=>{if(!S.sendBy){S.err="渡し方を1つ選んでください。";V.send();return}S.flash="ノートを家族に渡しました（試作）";S.lastDone=null;back();cue("ノートを家族に渡しました","試作")}},{id:"b",label:backLabel(),cls:"back",on:back}]);
+  bar([{id:"n",label:"渡す",cls:"primary",on:()=>{if(!S.sendBy){S.err="渡し方を1つ選んでください。";V.send();return}if(S.sendBy==="app"){show("wagaya");return}S.flash="ノートを家族に渡しました（試作）";S.lastDone=null;back();cue("ノートを家族に渡しました","試作")}},{id:"b",label:backLabel(),cls:"back",on:back}]);
+},
+wagaya(){
+  const pages=PAGES.map(([pg,name])=>[name,Object.values(S.notes).filter(n=>n.page===pg)]).filter(([,es])=>es.length);
+  const tl=topicItems();
+  $("screen").innerHTML=`
+   <p class="eyebrow">わが家ノート（三菱UFJ信託銀行のアプリ）</p>
+   <h1>この内容を引き継ぎます</h1>
+   <section class="panel"><h2 style="font-size:18px">引き継ぐもの</h2>${pages.length?`<dl class="dl">${pages.map(([name,es])=>`<dt>${name}</dt><dd>${es.map(n=>esc(n.label)).join("<br>")}</dd>`).join("")}</dl>`:`<p class="small">まだノートに書いたことがありません。</p>`}</section>
+   <div class="notice"><b>引き継がないもの</b>${tl.length?`「家族と話すこと」（${tl.length}件）は、家族と話して決めてからノートに書きます。`:"「家族と話すこと」は、家族と話して決めてからノートに書きます。"}質問への答えも引き継ぎません。</div>
+   <p class="note">試作品のため、実際の引き継ぎは行われません。わが家ノートの項目との対応は想定です。</p>`;
+  bar([{id:"n",label:"この内容で引き継ぐ",cls:"primary",on:()=>{if(!pages.length){show("note");return}S.sentApp=true;S.hist.pop();back();cue("わが家ノートに引き継ぎました","試作")}},{id:"b",label:backLabel(),cls:"back",on:back}]);
 },
 consult(){
   const list=proFor();
