@@ -2,15 +2,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>相続準備ガイド 試作</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Zen+Maru+Gothic:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=BIZ+UDPGothic:wght@400;700&display=swap">
 <style>
 /* v22: information design rebuilt after the Digital Agency design system (one purpose per screen, 1 filled button, short text, one progress component) */
 :root{
-  --bg:#f7f6f8; --card:#ffffff; --fg:#1f1a24; --sub:#5a5363; --line:#cfc7d6; --line-soft:#e6e0ea;
-  --accent:#8f3a7b; --accent-soft:#f5e7f1; --accent-ink:#6b2a5c; --ok:#2b7656; --ok-soft:#e3f1e9;
+  /* colors sampled from the existing そうぞくガイド: page #fcf8fb, headings #653257, accent #aa5194, label #eedcea, text #313131 */
+  --bg:#fcf8fb; --card:#ffffff; --fg:#313131; --sub:#5f5a5e; --line:#dccdd8; --line-soft:#eedcea;
+  --accent:#aa5194; --accent-soft:#f6eaf3; --accent-ink:#653257; --ok:#2b7656; --ok-soft:#e3f1e9;
   --paper:#fffdf5; --paper-line:#e6dcb4; --paper-rule:#efe7c8;
-  --display:"Zen Maru Gothic","Hiragino Maru Gothic ProN","BIZ UDPGothic",sans-serif;
-  --body:"BIZ UDPGothic","Noto Sans JP","Hiragino Sans","Yu Gothic",Meiryo,sans-serif;
+  --display:"Noto Sans JP","Hiragino Sans","BIZ UDPGothic",sans-serif;
+  --body:"Noto Sans JP","Hiragino Sans","BIZ UDPGothic","Yu Gothic",Meiryo,sans-serif;
   --s1:8px; --s2:16px; --s3:24px; --s4:40px; --s5:64px; --r:8px;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
@@ -45,13 +46,13 @@ aside{display:none}
  body.narrow main{max-width:640px}
 }
 /* type */
-h1{font-family:var(--display);font-size:28px;line-height:1.45;margin:0;text-wrap:balance;word-break:auto-phrase;letter-spacing:.01em}
-h2{font-family:var(--display);font-size:22px;margin:0;line-height:1.5}
+h1{font-family:var(--display);color:var(--accent-ink);font-weight:700;font-size:28px;line-height:1.45;margin:0;text-wrap:balance;word-break:auto-phrase;letter-spacing:.01em}
+h2{font-family:var(--display);color:var(--accent-ink);font-weight:700;font-size:22px;margin:0;line-height:1.5}
 h3{font-size:18px;margin:0;line-height:1.5}
 p{margin:0}
 .lead{color:var(--sub)}
 .small{font-size:15px;color:var(--sub);line-height:1.6}
-.eyebrow{font-size:15px;color:var(--sub);font-weight:700;margin-bottom:calc(var(--s2) * -1)}
+.eyebrow{align-self:flex-start;font-size:14px;color:var(--accent);font-weight:700;border:1.5px solid var(--accent);border-radius:999px;padding:1px 12px;background:var(--card);margin-bottom:calc(var(--s2) * -1)}
 .stack{display:flex;flex-direction:column;gap:var(--s2)}
 .stack.tight{gap:var(--s1)}
 /* buttons (filled / outline / text) */
@@ -211,7 +212,11 @@ const GLOSS={
  "暦年贈与":"1年間（1月〜12月）に110万円までの贈与なら、贈与税がかからない仕組みです。",
  "二次相続":"夫・妻のどちらかが亡くなった後、残った人が亡くなったときの相続です。",
  "成年後見":"判断が難しくなった人のお金や契約を、家庭裁判所が選んだ人が代わりに管理する仕組みです。",
- "家族信託":"元気なうちに、信頼できる家族にお金や家の管理を任せる契約です。"
+ "家族信託":"元気なうちに、信頼できる家族にお金や家の管理を任せる契約です。",
+ "名義預金":"家族の名前の口座でも、実際には本人のお金として管理している預金です。相続財産として扱われます。",
+ "自筆証書遺言":"自分で書く遺言書です。法務局に預ける制度もあります。",
+ "公正証書遺言":"公証役場で、公証人に作ってもらう遺言書です。形式の不備で無効になりにくい方法です。",
+ "非課税枠":"死亡保険金のうち、500万円×法定相続人の数までは相続税がかかりません。"
 };
 /* ending-note pages: the container every step's result is written into */
 const PAGES=[["family","家族のこと"],["money","お金のこと"],["tax","相続税のこと"],["land","家や土地のこと"],["leave","残したいもの"],["care","医療・介護のこと"],["words","家族へのことば"],["things","身の回りのこと"]];
@@ -251,13 +256,15 @@ const ROUTES={
   {id:"0005",t:"[[法定相続人]]が誰になるかを確かめる",k:"calc",tool:"heirs",page:"family",time:"1分"},
   {id:"0006",t:"[[相続税]]がかかるかの目安を見る",k:"calc",tool:"tax",page:"tax",time:"1分"},
   {id:"0021",t:"相続税を預金で払えそうか考える",k:"decide",page:"tax",time:"3分",about:"相続税は、原則として10か月以内に現金で払います。家や土地が多く預金が少ないと、払うお金が足りなくなることがあります。",ask:"預金で払えそうですか？",opts:["払えそう","足りないかもしれない","わからない"],if:A=>taxResult(A).level!=="safe"},
-  {id:"0034",t:"生きているうちに少しずつ渡すか考える",k:"decide",page:"leave",time:"3分",about:"1年に110万円までなら、贈与税がかからずに渡せます（[[暦年贈与]]）。亡くなる前7年以内の分は相続財産に戻されます。",ask:"生きているうちに渡したいですか？",opts:["渡したい","今は考えていない","わからない"],if:A=>taxResult(A).level!=="safe"},
+  {id:"0036",t:"生命保険の非課税枠を見る",k:"calc",tool:"ins",page:"tax",time:"1分",if:A=>taxResult(A).level!=="safe"},
+  {id:"0034",t:"生きているうちに少しずつ渡すか考える",k:"decide",page:"leave",time:"3分",about:"1年に110万円までなら、贈与税がかからずに渡せます（[[暦年贈与]]）。亡くなる前7年以内の分は相続財産に戻されます。家族の名前で預金だけしておく[[名義預金]]や、毎年同じ額を決めて渡す約束は、贈与と認められないことがあります。",ask:"生きているうちに渡したいですか？",opts:["渡したい","今は考えていない","わからない"],if:A=>taxResult(A).level!=="safe"},
   {id:"0009",t:"銀行の相談員と、正確な試算をする",k:"human",time:"30分",pro:["税理士"],if:A=>taxResult(A).level!=="safe"}],
  leave:[
   {id:"0005",t:"[[法定相続人]]が誰になるかを確かめる",k:"calc",tool:"heirs",page:"family",time:"1分"},
   {id:"0025",t:"家族以外に渡したい人と、渡したいものを書く",k:"write",page:"leave",time:"5分",chips:["姪","甥","お世話になった人"],ph:"例：お世話になった姪に、着物を",if:A=>A.others==="いる"},
   {id:"0024w",t:"残したいものを1つ書く",k:"write",page:"leave",time:"5分",chips:["家","預金","着物","アルバム"],ph:"例：父のアルバムを長男に"},
   {id:"0022",t:"夫・妻にどれくらい残すか考える",k:"decide",page:"leave",time:"3分",about:"夫・妻のどちらかが亡くなった後、残った人が亡くなったときにも相続があります（[[二次相続]]）。1回目の分け方で、2回目の税金が変わることがあります。",ask:"夫・妻に多めに残したいですか？",opts:["多めに残したい","子どもと同じくらい","わからない"],if:A=>A.spouse==="いる"},
+  {id:"0031w",t:"遺言書を作るか考える",k:"decide",page:"leave",time:"3分",about:"遺言書があると、誰に何を残すかを自分で決めておけます。自分で書く[[自筆証書遺言]]と、公証役場で作る[[公正証書遺言]]があります。",ask:"遺言書を作りたいですか？",opts:["作りたい","相談してから決めたい","わからない"],if:A=>A.will!=="ある"},
   {id:"0031",t:"銀行の相談員に、遺言の作り方を聞く",k:"human",time:"30分",pro:["弁護士","司法書士"],if:A=>A.will!=="ある"}],
  dementia:[
   {id:"0042",t:"医療や介護の希望を1つ書く",k:"write",page:"care",time:"5分",chips:["できるだけ家で過ごしたい","延命治療は望まない","家族に任せる"],ph:"例：できるだけ家で過ごしたい"},
@@ -266,6 +273,7 @@ const ROUTES={
   {id:"0007",t:"銀行の相談員に、家族がお金を出せる仕組みを聞く",k:"human",time:"30分",pro:["司法書士","弁護士"]}],
  talk:[
   {id:"0005",t:"誰と話しておけばよいか（[[法定相続人]]）を確かめる",k:"calc",tool:"heirs",page:"family",time:"1分"},
+  {id:"0037",t:"相続人になる家族との連絡のとり方を書く",k:"write",page:"family",time:"5分",chips:["LINEでつながっている","電話番号を知っている","しばらく連絡していない人がいる"],ph:"例：長男・長女とはLINE。弟とは年賀状だけ"},
   {id:"0032",t:"子どもに伝えたいことを1つ書く",k:"write",page:"words",time:"5分",chips:["家のこと","お金のこと","お墓のこと","ありがとう"],ph:"例：家のことは長男に相談してほしい"},
   {id:"0042",t:"医療や介護の希望を1つ書く",k:"write",page:"care",time:"5分",chips:["できるだけ家で過ごしたい","延命治療は望まない","家族に任せる"],ph:"例：できるだけ家で過ごしたい"},
   {id:"0007",t:"銀行の相談員に、家族に何を伝えておくとよいか聞く",k:"human",time:"30分",pro:["弁護士"]}],
@@ -369,6 +377,7 @@ function cueFor(name){
 function toolText(s){
   if(s.tool==="heirs"){const h=heirs(S.ans);return h.n?`法定相続人は ${h.n}人${h.approx?"以上":""}（${h.who}）`:h.who}
   if(s.tool==="tax"){const t=taxResult(S.ans);return `${t.title}。${t.body}`}
+  if(s.tool==="ins"){const h=heirs(S.ans);return h.n?`${(500*h.n).toLocaleString()}万円まで非課税（500万円×法定相続人${h.n}人）`:"法定相続人の人数が分かると表示できます"}
   return "";
 }
 function agenda(){
@@ -655,8 +664,9 @@ function work(s){
       <div class="choice">${s.opts.map(o=>`<button type="button" class="opt round" aria-pressed="${S.pick[s.id]===o}" data-pick="${esc(o)}"><span class="box">●</span><span>${esc(o)}</span></button>`).join("")}</div>
       ${err()}
       <button type="button" class="btn primary wide" id="doDecide">ノートに書く${dest}</button></div>`}
-  const t=s.tool==="tax"?taxResult(S.ans):null;
-  return `<div class="work">${where}${g}<div class="result"><p class="big">${s.tool==="heirs"?esc(toolText(s).split("（")[0]):esc(t.title)}</p><p>${s.tool==="heirs"?esc((toolText(s).match(/（(.+)）/)||[,""])[1]):esc(t.body)}</p></div>
+  const t=s.tool==="tax"?taxResult(S.ans):null;const tt=toolText(s);
+  const head=s.tool==="tax"?t.title:tt.split("（")[0];const sub=s.tool==="tax"?t.body:s.tool==="ins"?"受け取る死亡保険金のうち、この額までは相続税がかかりません。":((tt.match(/（(.+)）/)||[,""])[1]);
+  return `<div class="work">${where}${s.tool==="ins"?"":g}<div class="result"><p class="big">${esc(head)}</p><p>${esc(sub)}</p></div>
       ${s.tool==="tax"?`<div class="notice"><b>目安です</b>自宅の土地は評価が大きく下がる特例があるなど、実際とずれる場合があります。</div>`:""}
       <button type="button" class="btn primary wide" id="doCalc">ノートに書く${dest}</button></div>`;
 }
@@ -666,6 +676,7 @@ function finish(s,text){S.done[s.id]=true;const lb=noteLabel(s);if(s.page&&text!
   if(text==null)tk={kind:"ask",text:`${lb}を、まだ決められていない`};
   if(s.k==="decide"){const v=S.pick[s.id];tk={kind:UNSURE.test(v)?"ask":"tell",text:`${lb}：${v}`}}
   if(s.tool==="heirs"){const h=heirs(S.ans);tk=h.n?{kind:"tell",text:`相続人になるのは ${h.who}`}:{kind:"ask",text:"相続人が誰になるか、まだ分からない"}}
+  if(s.tool==="ins"){tk={kind:"ask",text:"生命保険の非課税枠を使えているか、一緒に確かめたい"}}
   if(s.tool==="tax"){const t=taxResult(S.ans);tk=t.level==="safe"?{kind:"tell",text:"相続税は、かからなそう"}:t.level==="unknown"?{kind:"ask",text:"相続税の目安が出せなかった。財産のことを一緒に確かめたい"}:{kind:"ask",text:"相続税がかかるかもしれない。どう備えるか"}}
   if(tk){tk.page=s.page||"words";S.talk[s.id]=tk}
   const wrote=s.page&&text!=null;
