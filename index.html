@@ -127,15 +127,16 @@ textarea{font:inherit;font-size:17px;width:100%;min-height:96px;border:2px solid
 .plainlist li.isdone{color:var(--sub)}
 .other{display:flex;flex-direction:column;gap:4px}
 .inline-confirm{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--accent-soft);border-radius:12px;padding:10px 12px;font-size:15px}
-@media (prefers-reduced-motion:no-preference){
-main{animation:in .35s ease-out}
-.enter{animation:rise .6s cubic-bezier(.2,.7,.2,1) both}
-.fold{animation:fold .4s ease-out both}
-.flash{animation:in .4s ease-out}
+main{-webkit-animation:fade .35s ease-out both;animation:fade .35s ease-out both}
+.enter{-webkit-animation:fade .7s ease-out both;animation:fade .7s ease-out both}
+.flash{-webkit-animation:fade .5s ease-out both;animation:fade .5s ease-out both}
 .opt{transition:background-color .2s,border-color .2s}
-@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@-webkit-keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@-webkit-keyframes rise{from{opacity:0;-webkit-transform:translateY(24px)}to{opacity:1;-webkit-transform:none}}
 @keyframes rise{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
-@keyframes fold{from{opacity:.3;transform:scaleY(.85)}to{opacity:1;transform:none}}}
+@media (prefers-reduced-motion:no-preference){
+.enter{-webkit-animation:rise .7s cubic-bezier(.2,.7,.2,1) both;animation:rise .7s cubic-bezier(.2,.7,.2,1) both}}
 </style>
 
 <div class="app">
@@ -304,8 +305,14 @@ function resumeText(){
   const r=routeOf(S.worries[0]);return `次に開いたとき「道のり」の${Math.min(curIndex(r)+1,r.length)}つめから始まります`;
 }
 const SAVE=()=>`<p class="save">答えはこの端末に保存されています。${resumeText()}。答えはいつでも選び直せます。</p>`;
-function scrollToSec(i){requestAnimationFrame(()=>{const el=document.getElementById("sec"+i);if(el)el.scrollIntoView({behavior:RM()?"auto":"smooth",block:"start"})})}
-function advance(i){S.revealed=Math.max(S.revealed,i+1);S.anim=i+1;S.err="";S.errAt=null;persist();V.flow();setTimeout(()=>scrollToSec(i+1),RM()?0:750)}
+function smoothTo(el){if(!el)return;const head=document.querySelector(".top");const off=(head?head.offsetHeight:0)+12;
+  const target=Math.max(0,el.getBoundingClientRect().top+window.pageYOffset-off);
+  if(RM()){window.scrollTo(0,target);return}
+  const start=window.pageYOffset,d=target-start,dur=800;let t0=null;
+  const step=ts=>{if(t0===null)t0=ts;const p=Math.min(1,(ts-t0)/dur);const e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;window.scrollTo(0,start+d*e);if(p<1)requestAnimationFrame(step)};
+  requestAnimationFrame(step)}
+function scrollToSec(i){requestAnimationFrame(()=>smoothTo(document.getElementById("sec"+i)))}
+function advance(i){S.revealed=Math.max(S.revealed,i+1);S.anim=i+1;S.err="";S.errAt=null;persist();V.flow();setTimeout(()=>scrollToSec(i+1),750)}
 function stepSummary(r){const c={self:0,human:0};r.forEach(s=>s.k==="human"?c.human++:c.self++);return c}
 
 const V={
@@ -323,7 +330,7 @@ home(){
   if($("reset"))$("reset").onclick=()=>{S.confirmReset=true;V.home()};
   if($("rsY"))$("rsY").onclick=()=>{S=FRESH();try{localStorage.removeItem(KEY)}catch(e){};render()};
   if($("rsN"))$("rsN").onclick=()=>{S.confirmReset=false;V.home()};
-  const resume=()=>{if(S.revealed<sections()){go("flow");setTimeout(()=>scrollToSec(S.revealed),RM()?0:400)}else go("route")};
+  const resume=()=>{if(S.revealed<sections()){go("flow");setTimeout(()=>scrollToSec(S.revealed),400)}else go("route")};
   bar(has?[{id:"start",label:"続きから始める",cls:"primary",on:resume}]:[{id:"start",label:"寄り添いガイドで始める",cls:"primary",on:()=>{S.revealed=0;go("flow")}}]);
 },
 self(){
@@ -405,7 +412,7 @@ route(){
   document.querySelectorAll("textarea").forEach(t=>t.oninput=()=>{S.memos[t.dataset.pd]=t.value;persist();const s=$("sv"+t.dataset.pd);if(s)s.textContent="保存しました"});
   document.querySelectorAll("[data-undo]").forEach(b=>b.onclick=()=>{delete S.done[b.dataset.undo];S.flash="";S.lastDone=null;persist();V.route()});
   document.querySelectorAll("[data-swap]").forEach(b=>b.onclick=()=>{const o=b.dataset.swap;S.worries=[o,...S.worries.filter(x=>x!==o)];S.flash="";persist();V.route();window.scrollTo(0,0)});
-  if($("doDone"))$("doDone").onclick=()=>{const s=all[cur];S.done[s.pd]=true;S.lastDone=s.pd;const nc=curIndex(routeOf(w));S.flash=`「${plain(s.t)}」ができました。次はこちらです`;S.anim="r"+nc;persist();V.route();setTimeout(()=>{const el=$("st"+nc);if(el)el.scrollIntoView({block:"start",behavior:RM()?"auto":"smooth"})},RM()?0:750)};
+  if($("doDone"))$("doDone").onclick=()=>{const s=all[cur];S.done[s.pd]=true;S.lastDone=s.pd;const nc=curIndex(routeOf(w));S.flash=`「${plain(s.t)}」ができました。次はこちらです`;S.anim="r"+nc;persist();V.route();setTimeout(()=>smoothTo($("st"+nc)),750)};
   if($("doBook"))$("doBook").onclick=()=>go("book");
   if($("doPro"))$("doPro").onclick=()=>{S.proFor=prosFor(all[cur]);go("pro")};
   if($("doLine"))$("doLine").onclick=()=>go("line");
@@ -465,6 +472,7 @@ map(){
   $("screen").innerHTML=`
    <p class="qno">確認用</p>
    <h1>画面マップ</h1>
+   <div class="card small">この端末の状態：動きを減らす設定 ${RM()?"<b>オン</b>（動きは控えめのフェードのみ）":"オフ"}／${(navigator.userAgent.match(/OS (\d+)_(\d+)/)||[]).length?"iOS "+navigator.userAgent.match(/OS (\d+)_(\d+)/).slice(1).join("."):"iOS以外"}</div>
    <div class="card map"><ol>
     <li>はじめの画面<div class="br">分岐：自分で調べる → 既存のやることリスト（44件・変更なし）</div></li>
     <li>質問のページ（縦に続く1ページ。選んで「次へ」）
