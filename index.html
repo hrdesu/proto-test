@@ -140,9 +140,10 @@ textarea{min-height:112px;resize:vertical}
 .hwrap{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:var(--s1);align-items:start}
 .hwrap>.btn{margin-top:var(--s4)}
 .hscroll{display:flex;gap:var(--s2);overflow-x:auto;scroll-snap-type:x proximity;scroll-padding-left:10%;padding:4px 2px var(--s2);align-items:flex-start}
-.hcard{flex:none;width:40%;min-width:240px;scroll-snap-align:start;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:var(--s2);display:flex;flex-direction:column;gap:var(--s1)}
-.hcard.now{width:70%;max-width:820px;border:2px solid var(--accent);padding:var(--s3)}
-.hcard.done{background:transparent}
+.hcard{flex:none;width:72%;max-width:820px;min-width:240px;scroll-snap-align:start;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:var(--s2);display:flex;flex-direction:column;gap:var(--s1)}
+.hcard{padding:var(--s3)}
+.hcard.now{border:2px solid var(--accent)}
+.hcard.later{opacity:.75}
 .hcard .work{border:0;padding:0;margin:0}
 .overview{list-style:none;margin:0;padding:0;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:var(--s1)}
 .overview li{display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.4;color:var(--sub)}
@@ -461,7 +462,7 @@ route(){
     body=`<ol class="road" aria-label="やることの一覧">${stops.map(o=>`<li class="${o.st}"${o.st==="now"?' aria-current="step"':""}><span class="dot" aria-hidden="true">${o.st==="done"?"✓":o.no}</span><div class="st">${o.st==="now"?work(o.s):(o.st==="done"?`<button type="button" class="rowbtn" data-redo="${o.s.id}" aria-label="${esc(plain(o.s.t))}（済）。押すと書き直せます"><span class="t">${plain(o.s.t)} ${pill(o.st,o.s)}</span></button>`:`<span class="t">${plain(o.s.t)} ${pill(o.st,o.s)}</span>`)}</div></li>`).join("")}</ol>`;
   }else if(L==="a"){
     body=`<div class="hwrap"><button type="button" class="btn sm" id="hPrev" aria-label="前のカードへ">←</button>
-      <div class="hscroll" id="hs" tabindex="0" aria-label="やることのカード">${stops.map(o=>`<section class="hcard ${o.st}">${o.st==="now"?work(o.s):(o.st==="done"?`<button type="button" class="rowbtn" data-redo="${o.s.id}" aria-label="${esc(plain(o.s.t))}（済）。押すと書き直せます"><p class="count">${o.no}. ${pill(o.st,o.s)}</p><p class="t">${plain(o.s.t)}</p></button>`:`<p class="count">${o.no}. ${pill(o.st,o.s)}</p><p class="t">${plain(o.s.t)}</p>`)}</section>`).join("")}</div>
+      <div class="hscroll" id="hs" tabindex="0" aria-label="やることのカード">${stops.map(o=>`<section class="hcard ${o.st}" data-i="${o.no-1}">${work(o.s,"_"+(o.no-1),o.st||"later")}</section>`).join("")}</div>
       <button type="button" class="btn sm" id="hNext" aria-label="次のカードへ">→</button></div>`;
   }else{
     body=`<ol class="overview" aria-label="やることの一覧">${stops.map(o=>`<li class="${o.st}">${o.no}. ${plain(o.s.t)}</li>`).join("")}</ol><section class="nowbox">${work(ss[cur])}</section>`;
@@ -474,9 +475,12 @@ route(){
    ${body}
    ${tl.length?`<p class="small">家族と話すことが${tl.length}件たまっています。<button type="button" class="tbtn" id="seeTalk">見る</button></p>`:""}
    ${isPC()?`<div class="seg" role="group" aria-label="並べ方（比較用）">並べ方（比較用）<button type="button" class="chip" aria-pressed="${L==="a"}" data-lay="a">横スクロール</button><button type="button" class="chip" aria-pressed="${L==="b"}" data-lay="b">全体図</button></div>`:""}`;
-  bindWork(ss,cur);
+  if(L==="a")stops.forEach(o=>bindCard(o.s,"_"+(o.no-1)));else bindWork(ss,cur);
   document.querySelectorAll("[data-lay]").forEach(b=>b.onclick=()=>{S.pcLayout=b.dataset.lay;try{localStorage.setItem(KEY+"-lay2",S.pcLayout)}catch(e){};render();cue(S.pcLayout==="a"?"横スクロール":"全体図","並べ方を切り替えました")});
-  if(L==="a"){const hsEl=$("hs");const nowEl=document.querySelector(".hcard.now");if(hsEl&&nowEl)requestAnimationFrame(()=>{hsEl.scrollLeft=Math.max(0,nowEl.offsetLeft-hsEl.offsetLeft-Math.round(hsEl.clientWidth*.1))});
+  if(L==="a"){const hsEl=$("hs");const nowEl=document.querySelector(".hcard.now");const pos=el=>Math.max(0,el.offsetLeft-hsEl.offsetLeft-Math.round(hsEl.clientWidth*.06));
+    const fromEl=S.slideFrom!=null?document.querySelector(`.hcard[data-i="${S.slideFrom}"]`):null;S.slideFrom=null;
+    const tgt=S.focusI!=null?document.querySelector(`.hcard[data-i="${S.focusI}"]`):nowEl;S.focusI=null;
+    if(hsEl&&tgt)requestAnimationFrame(()=>{if(fromEl&&!RM()){hsEl.scrollLeft=pos(fromEl);requestAnimationFrame(()=>hsEl.scrollTo({left:pos(tgt),behavior:"smooth"}))}else hsEl.scrollLeft=pos(tgt)});
     $("hPrev").onclick=()=>hsEl.scrollBy({left:-380,behavior:RM()?"auto":"smooth"});$("hNext").onclick=()=>hsEl.scrollBy({left:380,behavior:RM()?"auto":"smooth"})}
   if($("seeTalk"))$("seeTalk").onclick=()=>show("note");
   document.querySelectorAll("[data-redo]").forEach(b=>b.onclick=()=>{const id=b.dataset.redo;const n=S.notes[id];if(n&&n.text&&!/ → /.test(n.text))S.draft[id]=n.text;delete S.done[id];delete S.notes[id];delete S.talk[id];S.flash="";S.lastDone=null;persist();render();window.scrollTo(0,0);cue("書き直します","前の答えは消えていません。直して「できた」を押してください")});
@@ -671,31 +675,33 @@ map(){
 }
 };
 /* the current step is worked in place */
-function work(s){
+function work(s,sfx,st){sfx=sfx||"";st=st||"now";
   const g=glossBlock(s.t,s.bring,s.about);
   const ss=selfSteps(routeOf(S.worries[0]));const n=ss.indexOf(s)+1;
-  const where=`<header class="workhead"><p class="count">やること ${n} / ${ss.length}・${s.time}ほど</p><h2>${plain(s.t)}</h2></header>`;const dest=`<small>答えは、自動でノートに残ります</small>`;
-  if(s.k==="write"){const d=S.draft[s.id]||"";
+  const later=st==="later";const myErr=(S.errId===s.id||(!S.errId&&st==="now"))?err():"";
+  const where=`<header class="workhead"><p class="count">やること ${n} / ${ss.length}・${st==="done"?`<span class="pill done">済</span>`:`${s.time}ほど`}</p><h2>${plain(s.t)}</h2></header>`;
+  const dest=later?`<small>前のやることが終わると押せます</small>`:`<small>答えは、自動でノートに残ります</small>`;const dis=later?" disabled":"";
+  if(s.k==="write"){const d=S.draft[s.id]!=null?S.draft[s.id]:(st==="done"&&S.notes[s.id]?S.notes[s.id].text:"");
     return `<div class="work">${where}
       ${s.bring?`<p><b>用意するもの</b>　${plain(s.bring)}</p>`:""}${g}
-      <div class="field"><label for="ta">ここに入力（言葉を押しても入ります）</label>
-       <div class="chips" aria-label="よく使う言葉">${(s.chips||[]).map(c=>`<button type="button" class="chip" data-chip="${esc(c)}">${esc(c)}</button>`).join("")}</div>
-       <textarea id="ta" placeholder="${esc(s.ph)}">${esc(d)}</textarea></div>
-      ${err()}
-      <button type="button" class="btn primary wide" id="doWrite">できた　次へ${dest}</button>
-      <button type="button" class="tbtn" id="skip">今は入力せずに次へ</button></div>`}
+      <div class="field"><label for="ta${sfx}">ここに入力（言葉を押しても入ります）</label>
+       <div class="chips" aria-label="よく使う言葉">${(s.chips||[]).map(c=>`<button type="button" class="chip" data-chip="${esc(c)}" data-ta="ta${sfx}"${dis}>${esc(c)}</button>`).join("")}</div>
+       <textarea id="ta${sfx}" placeholder="${esc(s.ph)}"${dis}>${esc(d)}</textarea></div>
+      ${myErr}
+      <button type="button" class="btn primary wide" id="doWrite${sfx}"${dis}>できた　次へ${dest}</button>
+      ${later?"":`<button type="button" class="tbtn" id="skip${sfx}">今は入力せずに次へ</button>`}</div>`}
   if(s.k==="decide"){return `<div class="work">${where}<p>${rich(s.about)}</p>${g}
       <h3>${esc(s.ask)}</h3>
-      <div class="choice">${s.opts.map(o=>`<button type="button" class="opt round" aria-pressed="${S.pick[s.id]===o}" data-pick="${esc(o)}"><span class="box">●</span><span>${esc(o)}</span></button>`).join("")}</div>
-      ${err()}
-      <button type="button" class="btn primary wide" id="doDecide">できた　次へ${dest}</button></div>`}
+      <div class="choice">${s.opts.map(o=>`<button type="button" class="opt round" aria-pressed="${S.pick[s.id]===o}" data-pick="${esc(o)}" data-sid="${s.id}"${dis}><span class="box">●</span><span>${esc(o)}</span></button>`).join("")}</div>
+      ${myErr}
+      <button type="button" class="btn primary wide" id="doDecide${sfx}"${dis}>できた　次へ${dest}</button></div>`}
   const t=s.tool==="tax"?taxResult(S.ans):null;const tt=toolText(s);
   const head=s.tool==="tax"?t.title:tt.split("（")[0];const sub=s.tool==="tax"?t.body:s.tool==="ins"?"受け取る死亡保険金のうち、この額までは相続税がかかりません。":((tt.match(/（(.+)）/)||[,""])[1]);
   return `<div class="work">${where}${s.tool==="ins"?"":g}<div class="result"><p class="big">${esc(head)}</p><p>${esc(sub)}</p></div>
       ${s.tool==="tax"?`<div class="notice"><b>目安です</b>自宅の土地は評価が大きく下がる特例があるなど、実際とずれる場合があります。</div>`:""}
-      <button type="button" class="btn primary wide" id="doCalc">分かった　次へ${dest}</button></div>`;
+      <button type="button" class="btn primary wide" id="doCalc${sfx}"${dis}>分かった　次へ${dest}</button></div>`;
 }
-function finish(s,text){S.done[s.id]=true;const lb=noteLabel(s);if(s.page&&text!=null)S.notes[s.id]={page:s.page,label:lb,text};
+function finish(s,text){S.slideFrom=selfSteps(routeOf(S.worries[0])).indexOf(s);S.errId=null;S.done[s.id]=true;const lb=noteLabel(s);if(s.page&&text!=null)S.notes[s.id]={page:s.page,label:lb,text};
   let tk=null;
   if(s.k==="write"&&text)tk={kind:"tell",text:`${lb}：${text}`};
   if(text==null)tk={kind:"ask",text:`${lb}を、まだ決められていない`};
@@ -708,16 +714,16 @@ function finish(s,text){S.done[s.id]=true;const lb=noteLabel(s);if(s.page&&text!
   S.lastDone=s.id;S.flash=wrote?`ノートの「${pageName(s.page)}」に残しました`:`「${plain(s.t)}」は家族と話すことに入れました`;S.err="";delete S.draft[s.id];persist();
   if(writingDone()){S.flash="";S.lastDone=null;show("phase");return}
   render();window.scrollTo(0,0);cue(wrote?`ノートの「${pageName(s.page)}」に残しました`:"次のやることに進みます","")}
-function bindWork(all,cur){
-  const s=all[cur];if(!s)return;
-  const ta=$("ta");
+function bindWork(all,cur){const s=all[cur];if(s)bindCard(s,"")}
+function bindCard(s,sfx){
+  const ta=$("ta"+sfx);const fi=sfx?+sfx.slice(1):null;const again=()=>{S.errId=s.id;S.focusI=fi;V.route()};
   if(ta)ta.oninput=()=>{S.draft[s.id]=ta.value;persist()};
-  document.querySelectorAll("[data-chip]").forEach(b=>b.onclick=()=>{const v=b.dataset.chip;ta.value=ta.value?ta.value+"、"+v:v;S.draft[s.id]=ta.value;persist();ta.focus()});
-  if($("doWrite"))$("doWrite").onclick=()=>{const v=(ta.value||"").trim();if(!v){S.err="ひとことでも入力するか、言葉を押してください。";V.route();return}finish(s,v)};
-  if($("doDecide"))$("doDecide").onclick=()=>{const v=S.pick[s.id];if(!v){S.err="1つ選んでください。";V.route();return}finish(s,`${s.ask} → ${v}`)};
-  document.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>{S.pick[s.id]=b.dataset.pick;S.err="";V.route()});
-  if($("doCalc"))$("doCalc").onclick=()=>finish(s,toolText(s));
-  if($("skip"))$("skip").onclick=()=>finish(s,null);
+  document.querySelectorAll(`[data-ta="ta${sfx}"]`).forEach(b=>b.onclick=()=>{const v=b.dataset.chip;ta.value=ta.value?ta.value+"、"+v:v;S.draft[s.id]=ta.value;persist();ta.focus()});
+  if($("doWrite"+sfx))$("doWrite"+sfx).onclick=()=>{const v=(ta.value||"").trim();if(!v){S.err="ひとことでも入力するか、言葉を押してください。";again();return}finish(s,v)};
+  if($("doDecide"+sfx))$("doDecide"+sfx).onclick=()=>{const v=S.pick[s.id];if(!v){S.err="1つ選んでください。";again();return}finish(s,`${s.ask} → ${v}`)};
+  document.querySelectorAll(`[data-sid="${s.id}"]`).forEach(b=>b.onclick=()=>{S.pick[s.id]=b.dataset.pick;S.err="";S.errId=null;S.focusI=fi;V.route()});
+  if($("doCalc"+sfx))$("doCalc"+sfx).onclick=()=>finish(s,toolText(s));
+  if($("skip"+sfx))$("skip"+sfx).onclick=()=>finish(s,null);
 }
 function sideFor(name){
   if(name==="q"){const qs=qList();const rows=[];if(S.worries.length)rows.push(`<dt>気になること</dt><dd>${S.worries.map(w=>wById(w).short).join("、")}</dd>`);
