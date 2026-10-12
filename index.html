@@ -117,6 +117,9 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px soli
 .pill.later{border:1px solid var(--line);color:var(--sub)}
 .work{background:var(--card);border:2px solid var(--accent);border-radius:var(--r);padding:var(--s3);display:flex;flex-direction:column;gap:var(--s2)}
 .work h2{font-size:22px}
+.workhead{background:var(--accent-soft);margin:calc(var(--s3) * -1) calc(var(--s3) * -1) 0;padding:var(--s2) var(--s3);border-radius:6px 6px 0 0;display:flex;flex-direction:column;gap:4px}
+.workhead .count{color:var(--accent-ink)}
+.workhead h2{font-size:24px;line-height:1.45}
 /* writing */
 .field{display:flex;flex-direction:column;gap:var(--s1)}
 .field label{font-weight:700}
@@ -448,8 +451,8 @@ route(){
     body=`<ol class="overview" aria-label="やることの一覧">${stops.map(o=>`<li class="${o.st}">${o.no}. ${plain(o.s.t)}</li>`).join("")}</ol><section class="nowbox">${work(ss[cur])}</section>`;
   }
   $("screen").innerHTML=`${phaseNav(0)}
-   <p class="eyebrow">やること ${cur+1} / ${ss.length}・${ss[cur].time}ほど</p>
-   <h1>${plain(ss[cur].t)}</h1>
+   <p class="eyebrow">${wById(w).short}</p>
+   <h1>あなたのやること（${ss.length}つ）</h1>
    ${S.flash?`<p class="banner" role="status">✓ ${S.flash}${S.lastDone?`<button type="button" class="tbtn" id="undo">取り消す</button>`:""}</p>`:""}
    ${body}
    ${tl.length?`<p class="small">家族と話すことが${tl.length}件たまっています。<button type="button" class="tbtn" id="seeTalk">見る</button></p>`:""}
@@ -636,7 +639,8 @@ map(){
 /* the current step is worked in place */
 function work(s){
   const g=glossBlock(s.t,s.bring,s.about);
-  const where="";const dest=s.page?`<small>「${pageName(s.page)}」のページに書きます</small>`:"";
+  const ss=selfSteps(routeOf(S.worries[0]));const n=ss.indexOf(s)+1;
+  const where=`<header class="workhead"><p class="count">やること ${n} / ${ss.length}・${s.time}ほど</p><h2>${plain(s.t)}</h2></header>`;const dest=s.page?`<small>「${pageName(s.page)}」のページに書きます</small>`:"";
   if(s.k==="write"){const d=S.draft[s.id]||"";
     return `<div class="work">${where}
       ${s.bring?`<p><b>用意するもの</b>　${plain(s.bring)}</p>`:""}${g}
