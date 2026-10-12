@@ -248,10 +248,10 @@ const QOF={where:["land","debt"],tax:["spouse","kids","sibs","assets","land"],le
 /* step kinds: write (書いてノートに残す) / decide (読んで、決めたことを残す) / calc (その場で分かり、ノートに残る) / human (人に相談する) */
 const ROUTES={
  where:[
-  {id:"0001",t:"よく使う通帳の、銀行名と置き場所を書く",k:"write",page:"money",bring:"通帳",time:"5分",chips:["タンスの引き出し","金庫","仏壇の下","寝室の棚"],ph:"例：◯◯銀行 △△支店。タンスの上の引き出し"},
-  {id:"0002",t:"株や投資信託の、会社名と書類の置き場所を書く",k:"write",page:"money",bring:"証券会社からの書類",time:"5分",chips:["持っていない","本棚のファイル","金庫"],ph:"例：□□証券。書類は本棚の青いファイル"},
-  {id:"0004",t:"借りているお金を書く",k:"write",page:"money",bring:"ローンの書類",time:"5分",chips:["住宅ローン","車のローン","カードの分割払い"],ph:"例：住宅ローン △△銀行 残り300万円くらい",if:A=>A.debt!=="ない"},
-  {id:"0003",t:"家や土地の[[権利証]]の置き場所を書く",k:"write",page:"land",bring:"[[権利証]]",time:"5分",chips:["金庫","仏壇の引き出し","銀行の貸金庫","わからない"],ph:"例：権利証は金庫の中",if:A=>A.land==="持っている"},
+  {id:"0001",t:"よく使う通帳の、銀行名と置き場所を入力する",k:"write",page:"money",bring:"通帳",time:"5分",chips:["タンスの引き出し","金庫","仏壇の下","寝室の棚"],ph:"例：◯◯銀行 △△支店。タンスの上の引き出し"},
+  {id:"0002",t:"株や投資信託の、会社名と書類の置き場所を入力する",k:"write",page:"money",bring:"証券会社からの書類",time:"5分",chips:["持っていない","本棚のファイル","金庫"],ph:"例：□□証券。書類は本棚の青いファイル"},
+  {id:"0004",t:"借りているお金を入力する",k:"write",page:"money",bring:"ローンの書類",time:"5分",chips:["住宅ローン","車のローン","カードの分割払い"],ph:"例：住宅ローン △△銀行 残り300万円くらい",if:A=>A.debt!=="ない"},
+  {id:"0003",t:"家や土地の[[権利証]]の置き場所を入力する",k:"write",page:"land",bring:"[[権利証]]",time:"5分",chips:["金庫","仏壇の引き出し","銀行の貸金庫","わからない"],ph:"例：権利証は金庫の中",if:A=>A.land==="持っている"},
   {id:"0007",t:"銀行の相談員に、漏れがないか見てもらう",k:"human",time:"30分",pro:["税理士"]}],
  tax:[
   {id:"0005",t:"[[法定相続人]]が誰になるかを確かめる",k:"calc",tool:"heirs",page:"family",time:"1分"},
@@ -262,29 +262,29 @@ const ROUTES={
   {id:"0009",t:"銀行の相談員と、正確な試算をする",k:"human",time:"30分",pro:["税理士"],if:A=>taxResult(A).level!=="safe"}],
  leave:[
   {id:"0005",t:"[[法定相続人]]が誰になるかを確かめる",k:"calc",tool:"heirs",page:"family",time:"1分"},
-  {id:"0025",t:"家族以外に渡したい人と、渡したいものを書く",k:"write",page:"leave",time:"5分",chips:["姪","甥","お世話になった人"],ph:"例：お世話になった姪に、着物を",if:A=>A.others==="いる"},
-  {id:"0024w",t:"残したいものを1つ書く",k:"write",page:"leave",time:"5分",chips:["家","預金","着物","アルバム"],ph:"例：父のアルバムを長男に"},
+  {id:"0025",t:"家族以外に渡したい人と、渡したいものを入力する",k:"write",page:"leave",time:"5分",chips:["姪","甥","お世話になった人"],ph:"例：お世話になった姪に、着物を",if:A=>A.others==="いる"},
+  {id:"0024w",t:"残したいものを1つ入力する",k:"write",page:"leave",time:"5分",chips:["家","預金","着物","アルバム"],ph:"例：父のアルバムを長男に"},
   {id:"0022",t:"夫・妻にどれくらい残すか考える",k:"decide",page:"leave",time:"3分",about:"夫・妻のどちらかが亡くなった後、残った人が亡くなったときにも相続があります（[[二次相続]]）。1回目の分け方で、2回目の税金が変わることがあります。",ask:"夫・妻に多めに残したいですか？",opts:["多めに残したい","子どもと同じくらい","わからない"],if:A=>A.spouse==="いる"},
   {id:"0031w",t:"遺言書を作るか考える",k:"decide",page:"leave",time:"3分",about:"遺言書があると、誰に何を残すかを自分で決めておけます。自分で書く[[自筆証書遺言]]と、公証役場で作る[[公正証書遺言]]があります。",ask:"遺言書を作りたいですか？",opts:["作りたい","相談してから決めたい","わからない"],if:A=>A.will!=="ある"},
   {id:"0031",t:"銀行の相談員に、遺言の作り方を聞く",k:"human",time:"30分",pro:["弁護士","司法書士"],if:A=>A.will!=="ある"}],
  dementia:[
-  {id:"0042",t:"医療や介護の希望を1つ書く",k:"write",page:"care",time:"5分",chips:["できるだけ家で過ごしたい","延命治療は望まない","家族に任せる"],ph:"例：できるだけ家で過ごしたい"},
+  {id:"0042",t:"医療や介護の希望を1つ入力する",k:"write",page:"care",time:"5分",chips:["できるだけ家で過ごしたい","延命治療は望まない","家族に任せる"],ph:"例：できるだけ家で過ごしたい"},
   {id:"0028",t:"お金のことを任せたい人を決める",k:"decide",page:"money",time:"3分",about:"判断が難しくなると、銀行の手続きが本人でないとできなくなります。家庭裁判所が人を選ぶ[[成年後見]]と、元気なうちに家族に任せておく[[家族信託]]があります。",ask:"お金のことを任せたい人はいますか？",opts:["決まっている","まだ決めていない","いない"]},
   {id:"0023",t:"介護をしてくれる家族のことを考える",k:"decide",page:"leave",time:"3分",about:"介護などで特に支えてくれた家族は、相続で多めに受け取れる場合があります。ただ、家族の間で意見が分かれやすいところです。",ask:"介護してくれている家族に、多めに残したいですか？",opts:["多めに残したい","みんな同じでよい","わからない"],if:A=>A.care==="受けている"},
   {id:"0007",t:"銀行の相談員に、家族がお金を出せる仕組みを聞く",k:"human",time:"30分",pro:["司法書士","弁護士"]}],
  talk:[
   {id:"0005",t:"誰と話しておけばよいか（[[法定相続人]]）を確かめる",k:"calc",tool:"heirs",page:"family",time:"1分"},
-  {id:"0037",t:"相続人になる家族との連絡のとり方を書く",k:"write",page:"family",time:"5分",chips:["LINEでつながっている","電話番号を知っている","しばらく連絡していない人がいる"],ph:"例：長男・長女とはLINE。弟とは年賀状だけ"},
-  {id:"0032",t:"子どもに伝えたいことを1つ書く",k:"write",page:"words",time:"5分",chips:["家のこと","お金のこと","お墓のこと","ありがとう"],ph:"例：家のことは長男に相談してほしい"},
-  {id:"0042",t:"医療や介護の希望を1つ書く",k:"write",page:"care",time:"5分",chips:["できるだけ家で過ごしたい","延命治療は望まない","家族に任せる"],ph:"例：できるだけ家で過ごしたい"},
+  {id:"0037",t:"相続人になる家族との連絡のとり方を入力する",k:"write",page:"family",time:"5分",chips:["LINEでつながっている","電話番号を知っている","しばらく連絡していない人がいる"],ph:"例：長男・長女とはLINE。弟とは年賀状だけ"},
+  {id:"0032",t:"子どもに伝えたいことを1つ入力する",k:"write",page:"words",time:"5分",chips:["家のこと","お金のこと","お墓のこと","ありがとう"],ph:"例：家のことは長男に相談してほしい"},
+  {id:"0042",t:"医療や介護の希望を1つ入力する",k:"write",page:"care",time:"5分",chips:["できるだけ家で過ごしたい","延命治療は望まない","家族に任せる"],ph:"例：できるだけ家で過ごしたい"},
   {id:"0007",t:"銀行の相談員に、家族に何を伝えておくとよいか聞く",k:"human",time:"30分",pro:["弁護士"]}],
  tidy:[
-  {id:"0045",t:"片付ける場所を1か所だけ決めて書く",k:"write",page:"things",time:"3分",chips:["押し入れ","物置","台所の棚","本棚"],ph:"例：押し入れの上の段"},
-  {id:"0043",t:"スマホで使っているサービスを書く",k:"write",page:"things",bring:"スマホ",time:"5分",chips:["ネット銀行","写真の保存","ネット通販","特にない"],ph:"例：写真はスマホの中だけ"},
-  {id:"0044",t:"ペットを預けたい人を書く",k:"write",page:"things",time:"3分",chips:["長男","長女","近所の人"],ph:"例：犬は長女に",if:A=>A.pet==="飼っている"},
-  {id:"0040",t:"お墓について決めていないことを書く",k:"write",page:"things",time:"3分",chips:["墓じまいするか","お墓を買うか","誰が守るか"],ph:"例：墓じまいするか迷っている",if:A=>A.grave!=="ない"}],
+  {id:"0045",t:"片付ける場所を1か所だけ決めて入力する",k:"write",page:"things",time:"3分",chips:["押し入れ","物置","台所の棚","本棚"],ph:"例：押し入れの上の段"},
+  {id:"0043",t:"スマホで使っているサービスを入力する",k:"write",page:"things",bring:"スマホ",time:"5分",chips:["ネット銀行","写真の保存","ネット通販","特にない"],ph:"例：写真はスマホの中だけ"},
+  {id:"0044",t:"ペットを預けたい人を入力する",k:"write",page:"things",time:"3分",chips:["長男","長女","近所の人"],ph:"例：犬は長女に",if:A=>A.pet==="飼っている"},
+  {id:"0040",t:"お墓について決めていないことを入力する",k:"write",page:"things",time:"3分",chips:["墓じまいするか","お墓を買うか","誰が守るか"],ph:"例：墓じまいするか迷っている",if:A=>A.grave!=="ない"}],
  land:[
-  {id:"0003",t:"家や土地の[[権利証]]の置き場所を書く",k:"write",page:"land",bring:"[[権利証]]",time:"5分",chips:["金庫","仏壇の引き出し","銀行の貸金庫","わからない"],ph:"例：権利証は金庫の中"},
+  {id:"0003",t:"家や土地の[[権利証]]の置き場所を入力する",k:"write",page:"land",bring:"[[権利証]]",time:"5分",chips:["金庫","仏壇の引き出し","銀行の貸金庫","わからない"],ph:"例：権利証は金庫の中"},
   {id:"0016",t:"空き家・別荘をどうしたいか考える",k:"decide",page:"land",time:"3分",about:"空き家は持っているだけで税金や管理の手間がかかります。売る、貸す、家族が住む、などの道があります。",ask:"どうしたいですか？",opts:["売りたい","家族に住んでほしい","まだ決めていない"],if:A=>has(A.landtype,"空き家・別荘")},
   {id:"0013",t:"貸している土地や建物をどうしたいか考える",k:"decide",page:"land",time:"3分",about:"貸している土地や建物は、契約の内容を家族が知らないと、引き継ぐときに困ります。",ask:"契約書の置き場所を、家族は知っていますか？",opts:["知っている","知らない","わからない"],if:A=>has(A.landtype,"貸している土地や建物")},
   {id:"0014",t:"山林や農地をどうしたいか考える",k:"decide",page:"land",time:"3分",about:"山林や農地は、売ったり貸したりしにくく、引き継ぐ人が困ることがあります。",ask:"引き継ぐ人は決まっていますか？",opts:["決まっている","まだ決めていない","引き継ぎたい人がいない"],if:A=>has(A.landtype,"山林・農地")},
@@ -351,7 +351,7 @@ const isPC=()=>!!(window.matchMedia&&window.matchMedia("(min-width:900px)").matc
 const UNSURE=/わからない|まだ|足りない|相談|知らない|いない/;
 function selfSteps(all){return all.filter(x=>x.k!=="human")}
 function humanStep(all){return all.find(x=>x.k==="human")}
-function noteLabel(s){return plain(s.t).replace(/(を|の)?(1つだけ決めて書く|決めて書く|書く|見る|確かめる|考える|決める)$/,"")}
+function noteLabel(s){return plain(s.t).replace(/(を|の)?(1つだけ決めて入力する|決めて入力する|1つ入力する|入力する|1つだけ決めて書く|決めて書く|書く|見る|確かめる|考える|決める)$/,"")}
 function talkItems(){const t=S.talk||{};return Object.keys(t).map(id=>({key:id,...t[id]}))}
 function topicItems(){const items=talkItems();return [...items.filter(x=>x.kind==="ask"),...items.filter(x=>x.kind==="tell")]}
 function topicText(key){const t=(S.talk||{})[key];if(t)return t.text;if(String(key).startsWith("page:"))return TALK[key.slice(5)];return ""}
@@ -361,6 +361,7 @@ function filledPages(){return PAGES.filter(p=>Object.values(S.notes).some(n=>n.p
 function mins(r){return r.reduce((a,s)=>a+parseInt(s.time||"0",10),0)}
 function writingDone(){const w=S.worries[0];if(!w)return false;const ss=selfSteps(routeOf(w));return curIndex(ss)>=ss.length}
 function nextWorry(){const w=S.worries[0];return S.worries.find(x=>x!==w&&curIndex(selfSteps(routeOf(x)))<selfSteps(routeOf(x)).length)}
+function addWorry(id){S.worries=[id,...S.worries.filter(x=>x!==id)];S.flash="";S.lastDone=null;const qs=qList();const k=qs.findIndex(q=>S.ans[q]==null||(Array.isArray(S.ans[q])&&!S.ans[q].length));persist();if(k>=0)show("q",{qi:k+1});else{S.qi=qs.length+1;show("route")}}
 function proFor(){const w=S.worries[0];const hs=w?humanStep(routeOf(w)):null;return hs&&hs.pro&&hs.pro.length?hs.pro:["税理士","司法書士","弁護士"]}
 /* actions: one filled button at most, outline buttons, one text button (back) */
 function bar(buttons){
@@ -490,7 +491,8 @@ phase(){
    <h2>次は、家族がそろう日を決めます</h2>
    <p>4つの質問（どんな集まりか・いつ・誰と・話したいこと）に答えます。旅行や帰省など、家族が集まる日に、このノートを一緒に開くためです。</p></div>`;
   const bs=[{id:"n",label:planDone()?"家族がそろう日の計画を見る":"家族がそろう日を決める",cls:"primary",on:()=>{if(planDone())show("plan");else{S.gi=0;show("gather")}}},{id:"o",label:"ノートを見る",cls:"",on:()=>show("note")}];
-  if(nw)bs.splice(1,0,{id:"w",label:`ほかの気になることも書く<small>${wById(nw).short}</small>`,cls:"",on:()=>{S.worries=[nw,...S.worries.filter(x=>x!==nw)];S.flash="";S.lastDone=null;persist();show("route")}});
+  if(!S.worries.includes("leave"))bs.splice(1,0,{id:"wl",label:"遺言のことも入力する<small>子どもに何を残すか</small>",cls:"",on:()=>addWorry("leave")});
+  if(nw)bs.splice(1,0,{id:"w",label:`ほかの気になることも入力する<small>${wById(nw).short}</small>`,cls:"",on:()=>{S.worries=[nw,...S.worries.filter(x=>x!==nw)];S.flash="";S.lastDone=null;persist();show("route")}});
   bs.push({id:"b",label:backLabel(),cls:"back",on:back});
   bar(bs);
   if($("seeTalk"))$("seeTalk").onclick=()=>show("note");
@@ -518,7 +520,7 @@ together(){
    </div>`;
   document.querySelectorAll("[data-fk]").forEach(t=>t.oninput=()=>{S.draft["fam_"+t.dataset.fk]=t.value;persist()});
   document.querySelectorAll("[data-fsave]").forEach(b=>b.onclick=()=>{const k=b.dataset.fsave,pg=b.dataset.pg;const ta=$("ft"+b.dataset.fi);const v=(ta.value||"").trim();if(!v){ta.focus();return}
-    S.notes["fam_"+k+"_"+Date.now()]={page:pg,label:"家族と話したこと",text:v};if(S.talk[k])S.talk[k].talked=true;delete S.draft["fam_"+k];persist();render();window.scrollTo(0,0);cue(`ノートの「${pageName(pg)}」に書きました`,"家族と話したことを")});
+    S.notes["fam_"+k+"_"+Date.now()]={page:pg,label:"家族と話したこと",text:v};if(S.talk[k])S.talk[k].talked=true;delete S.draft["fam_"+k];persist();render();window.scrollTo(0,0);cue(`ノートの「${pageName(pg)}」に残しました`,"家族と話したことを")});
   bar([{id:"n",label:"ノートを見る",cls:"",on:()=>show("note")},{id:"b",label:backLabel(),cls:"back",on:back}]);
 },
 gather(){
@@ -678,7 +680,7 @@ function work(s){
        <textarea id="ta" placeholder="${esc(s.ph)}">${esc(d)}</textarea></div>
       ${err()}
       <button type="button" class="btn primary wide" id="doWrite">できた　次へ${dest}</button>
-      <button type="button" class="tbtn" id="skip">今は書かずに次へ</button></div>`}
+      <button type="button" class="tbtn" id="skip">今は入力せずに次へ</button></div>`}
   if(s.k==="decide"){return `<div class="work">${where}<p>${rich(s.about)}</p>${g}
       <h3>${esc(s.ask)}</h3>
       <div class="choice">${s.opts.map(o=>`<button type="button" class="opt round" aria-pressed="${S.pick[s.id]===o}" data-pick="${esc(o)}"><span class="box">●</span><span>${esc(o)}</span></button>`).join("")}</div>
@@ -700,15 +702,15 @@ function finish(s,text){S.done[s.id]=true;const lb=noteLabel(s);if(s.page&&text!
   if(s.tool==="tax"){const t=taxResult(S.ans);tk=t.level==="safe"?{kind:"tell",text:"相続税は、かからなそう"}:t.level==="unknown"?{kind:"ask",text:"相続税の目安が出せなかった。財産のことを一緒に確かめたい"}:{kind:"ask",text:"相続税がかかるかもしれない。どう備えるか"}}
   if(tk){tk.page=s.page||"words";S.talk[s.id]=tk}
   const wrote=s.page&&text!=null;
-  S.lastDone=s.id;S.flash=wrote?`ノートの「${pageName(s.page)}」に書きました`:`「${plain(s.t)}」は家族と話すことに入れました`;S.err="";delete S.draft[s.id];persist();
+  S.lastDone=s.id;S.flash=wrote?`ノートの「${pageName(s.page)}」に残しました`:`「${plain(s.t)}」は家族と話すことに入れました`;S.err="";delete S.draft[s.id];persist();
   if(writingDone()){S.flash="";S.lastDone=null;show("phase");return}
-  render();window.scrollTo(0,0);cue(wrote?`ノートの「${pageName(s.page)}」に書きました`:"次のやることに進みます","")}
+  render();window.scrollTo(0,0);cue(wrote?`ノートの「${pageName(s.page)}」に残しました`:"次のやることに進みます","")}
 function bindWork(all,cur){
   const s=all[cur];if(!s)return;
   const ta=$("ta");
   if(ta)ta.oninput=()=>{S.draft[s.id]=ta.value;persist()};
   document.querySelectorAll("[data-chip]").forEach(b=>b.onclick=()=>{const v=b.dataset.chip;ta.value=ta.value?ta.value+"、"+v:v;S.draft[s.id]=ta.value;persist();ta.focus()});
-  if($("doWrite"))$("doWrite").onclick=()=>{const v=(ta.value||"").trim();if(!v){S.err="ひとことでも書くか、言葉を押してください。";V.route();return}finish(s,v)};
+  if($("doWrite"))$("doWrite").onclick=()=>{const v=(ta.value||"").trim();if(!v){S.err="ひとことでも入力するか、言葉を押してください。";V.route();return}finish(s,v)};
   if($("doDecide"))$("doDecide").onclick=()=>{const v=S.pick[s.id];if(!v){S.err="1つ選んでください。";V.route();return}finish(s,`${s.ask} → ${v}`)};
   document.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>{S.pick[s.id]=b.dataset.pick;S.err="";V.route()});
   if($("doCalc"))$("doCalc").onclick=()=>finish(s,toolText(s));
