@@ -114,7 +114,7 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px soli
 .pill.now{background:var(--accent);color:var(--card)}
 .pill.done{background:var(--ok-soft);color:var(--ok)}
 .pill.later{border:1px solid var(--line);color:var(--sub)}
-.work{background:var(--card);border:2px solid var(--accent);border-radius:var(--r);padding:var(--s3);display:flex;flex-direction:column;gap:var(--s2);margin-top:var(--s1)}
+.work{background:var(--card);border:2px solid var(--accent);border-radius:var(--r);padding:var(--s3);display:flex;flex-direction:column;gap:var(--s2)}
 .work h2{font-size:22px}
 /* writing */
 .field{display:flex;flex-direction:column;gap:var(--s1)}
@@ -435,16 +435,16 @@ route(){
   const stops=ss.map((s,i)=>({no:i+1,s,st:S.done[s.id]?"done":i===cur?"now":""}));
   let body="";
   if(L==="v"){
-    body=`<ol class="road" aria-label="やることの一覧">${stops.map(o=>`<li class="${o.st}"${o.st==="now"?' aria-current="step"':""}><span class="dot" aria-hidden="true">${o.st==="done"?"✓":o.no}</span><div class="st">${o.st==="now"?`<span>${pill("now")}</span>${work(o.s)}`:`<span class="t">${plain(o.s.t)} ${pill(o.st,o.s)}</span>`}</div></li>`).join("")}</ol>`;
+    body=`<ol class="road" aria-label="やることの一覧">${stops.map(o=>`<li class="${o.st}"${o.st==="now"?' aria-current="step"':""}><span class="dot" aria-hidden="true">${o.st==="done"?"✓":o.no}</span><div class="st">${o.st==="now"?work(o.s):`<span class="t">${plain(o.s.t)} ${pill(o.st,o.s)}</span>`}</div></li>`).join("")}</ol>`;
   }else if(L==="a"){
     body=`<div class="hwrap"><button type="button" class="btn sm" id="hPrev" aria-label="前のカードへ">←</button>
-      <div class="hscroll" id="hs" tabindex="0" aria-label="やることのカード">${stops.map(o=>`<section class="hcard ${o.st}"><p class="count">${o.no} / ${stops.length} ${pill(o.st,o.s)}</p>${o.st==="now"?work(o.s):`<p class="t">${plain(o.s.t)}</p>`}</section>`).join("")}</div>
+      <div class="hscroll" id="hs" tabindex="0" aria-label="やることのカード">${stops.map(o=>`<section class="hcard ${o.st}">${o.st==="now"?work(o.s):`<p class="count">${o.no}. ${pill(o.st,o.s)}</p><p class="t">${plain(o.s.t)}</p>`}</section>`).join("")}</div>
       <button type="button" class="btn sm" id="hNext" aria-label="次のカードへ">→</button></div>`;
   }else{
     body=`<ol class="overview" aria-label="やることの一覧">${stops.map(o=>`<li class="${o.st}">${o.no}. ${plain(o.s.t)}</li>`).join("")}</ol><section class="nowbox">${work(ss[cur])}</section>`;
   }
   $("screen").innerHTML=`${phaseNav(0)}
-   <p class="eyebrow">やること ${cur+1} / ${ss.length}</p>
+   <p class="eyebrow">やること ${cur+1} / ${ss.length}・${ss[cur].time}ほど</p>
    <h1>${plain(ss[cur].t)}</h1>
    ${S.flash?`<p class="banner" role="status">✓ ${S.flash}${S.lastDone?`<button type="button" class="tbtn" id="undo">取り消す</button>`:""}</p>`:""}
    ${body}
@@ -465,13 +465,14 @@ phase(){
    <div class="check" aria-hidden="true">✓</div>
    <p class="eyebrow">1. ノートを書く　完了</p>
    <h1>ノートが書けました</h1>
-   <div class="stats"><div class="stat"><b>${filledPages()}</b><span class="small">ページに書きました</span></div><div class="stat"><b>${tl.length}</b><span class="small">家族と話すこと${asks?`（一緒に考えたい ${asks}）`:""}</span></div></div>
+   <section class="panel"><dl class="dl"><dt>ノートに書いた</dt><dd>${PAGES.filter(([p])=>Object.values(S.notes).some(n=>n.page===p)).map(([,n])=>`「${n}」`).join("")||"まだありません"}のページ</dd><dt>家族と話すこと</dt><dd>${tl.length}つ　<button type="button" class="tbtn" id="seeTalk" style="min-height:auto;padding:0">見る</button></dd></dl></section>
    <h2>次は、家族がそろう日を決めます</h2>
    <p>旅行や帰省など、家族が集まる日に、このノートを一緒に開きます。</p></div>`;
   const bs=[{id:"n",label:planDone()?"家族がそろう日の計画を見る":"家族がそろう日を決める",cls:"primary",on:()=>{if(planDone())show("plan");else{S.gi=0;show("gather")}}},{id:"o",label:"ノートを見る",cls:"",on:()=>show("note")}];
   if(nw)bs.splice(1,0,{id:"w",label:`ほかの気になることも書く<small>${wById(nw).short}</small>`,cls:"",on:()=>{S.worries=[nw,...S.worries.filter(x=>x!==nw)];S.flash="";S.lastDone=null;persist();show("route")}});
   bs.push({id:"b",label:backLabel(),cls:"back",on:back});
   bar(bs);
+  if($("seeTalk"))$("seeTalk").onclick=()=>show("note");
 },
 note(){
   const tl=topicItems();
@@ -631,7 +632,7 @@ map(){
 /* the current step is worked in place */
 function work(s){
   const g=glossBlock(s.t,s.bring,s.about);
-  const where=s.page?`<p class="small">${s.time}ほど・ノートの「${pageName(s.page)}」に書き込まれます</p>`:"";
+  const where="";const dest=s.page?`<small>「${pageName(s.page)}」のページに書きます</small>`:"";
   if(s.k==="write"){const d=S.draft[s.id]||"";
     return `<div class="work">${where}
       ${s.bring?`<p><b>用意するもの</b>　${plain(s.bring)}</p>`:""}${g}
@@ -639,17 +640,17 @@ function work(s){
        <div class="chips" aria-label="よく使う言葉">${(s.chips||[]).map(c=>`<button type="button" class="chip" data-chip="${esc(c)}">${esc(c)}</button>`).join("")}</div>
        <textarea id="ta" placeholder="${esc(s.ph)}">${esc(d)}</textarea></div>
       ${err()}
-      <button type="button" class="btn primary wide" id="doWrite">ノートに書く</button>
+      <button type="button" class="btn primary wide" id="doWrite">ノートに書く${dest}</button>
       <button type="button" class="tbtn" id="skip">今は書かずに次へ</button></div>`}
   if(s.k==="decide"){return `<div class="work">${where}<p>${rich(s.about)}</p>${g}
       <h3>${esc(s.ask)}</h3>
       <div class="choice">${s.opts.map(o=>`<button type="button" class="opt round" aria-pressed="${S.pick[s.id]===o}" data-pick="${esc(o)}"><span class="box">●</span><span>${esc(o)}</span></button>`).join("")}</div>
       ${err()}
-      <button type="button" class="btn primary wide" id="doDecide">ノートに書く</button></div>`}
+      <button type="button" class="btn primary wide" id="doDecide">ノートに書く${dest}</button></div>`}
   const t=s.tool==="tax"?taxResult(S.ans):null;
   return `<div class="work">${where}${g}<div class="result"><p class="big">${s.tool==="heirs"?esc(toolText(s).split("（")[0]):esc(t.title)}</p><p>${s.tool==="heirs"?esc((toolText(s).match(/（(.+)）/)||[,""])[1]):esc(t.body)}</p></div>
       ${s.tool==="tax"?`<div class="notice"><b>目安です</b>自宅の土地は評価が大きく下がる特例があるなど、実際とずれる場合があります。</div>`:""}
-      <button type="button" class="btn primary wide" id="doCalc">ノートに書く</button></div>`;
+      <button type="button" class="btn primary wide" id="doCalc">ノートに書く${dest}</button></div>`;
 }
 function finish(s,text){S.done[s.id]=true;const lb=noteLabel(s);if(s.page&&text!=null)S.notes[s.id]={page:s.page,label:lb,text};
   let tk=null;
