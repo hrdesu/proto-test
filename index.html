@@ -129,6 +129,7 @@ textarea{font:inherit;font-size:18px;width:100%;min-height:120px;border:3px soli
 .tag.ask{background:var(--accent-soft);color:var(--accent-ink)}
 .tag.tell{background:var(--ok-soft);color:var(--ok)}
 .work.later{border-style:dashed;border-color:var(--line);background:var(--bg)}
+.crumb{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:15px}
 .agenda{margin:0;padding-left:1.3em}
 .agenda li{margin:4px 0}
 .consent{display:flex;gap:12px;align-items:flex-start;font-size:16px}
@@ -397,7 +398,7 @@ route(){
        ${i===cur?work(s):""}
      </div></li>`}).join("")}
    <li class="${done?"now":""}" id="stFam"><span class="dot" aria-hidden="true">${famNo}</span><div class="st"><b>${planDone()?`${planTitle()}に、家族とノートを開いて話す`:"家族がそろう日を決めて、ノートを一緒に開いて話す"}</b><span class="small">${done?"いまここ・":""}家族旅行や帰省など、家族がそろうときに</span>
-     ${started?`<div class="work${done?"":" later"}">${planDone()?`<p>話したいことは決めてあります（${(S.plan.topics||[]).length}件）。</p><button type="button" class="btn ${done?"primary":""} wide" id="goTogether">家族と一緒に開く<small>当日はこちら</small></button><button type="button" class="btn wide" id="goPlan">計画を見る</button>`:`<p>${tl.length?`「家族と話すこと」が${tl.length}件たまっています${asks?`（うち一緒に考えたいこと${asks}件）`:""}。`:""}家族がそろう日を決めて、誘いましょう。${done?"":"やることの途中でも決められます。"}</p><button type="button" class="btn ${done?"primary":""} wide" id="goGather">家族がそろう日を決める<small>旅行・帰省・お祝い</small></button>`}</div>`:`<span class="small">一歩でも進めると、ここから日を決められます。</span>`}
+     ${done?`<div class="work">${planDone()?`<p>話したいことは決めてあります（${(S.plan.topics||[]).length}件）。</p><button type="button" class="btn primary wide" id="goTogether">家族と一緒に開く<small>当日はこちら</small></button><button type="button" class="btn wide" id="goPlan">計画を見る</button>`:`<p>${tl.length?`「家族と話すこと」が${tl.length}件たまっています${asks?`（うち一緒に考えたいこと${asks}件）`:""}。`:""}家族がそろう日を決めて、誘いましょう。</p><button type="button" class="btn primary wide" id="goGather">家族がそろう日を決める<small>旅行・帰省・お祝い</small></button>`}</div>`:`<span class="small">一人でやることが終わったら、ここで家族がそろう日を決めます。${tl.length?`それまでに「家族と話すこと」がたまっていきます。`:""}</span>`}
    </div></li>
    ${hs?`<li id="stCon"><span class="dot" aria-hidden="true">${conNo}</span><div class="st"><b>必要なら、家族で${plain(hs.t).replace(/^(銀行の相談員に、|銀行の相談員と、)/,"銀行の相談員や専門家と、")}</b><span class="small">家族と話したあとがおすすめ・${KIND.human}</span>
      <div class="work later"><p>話すことは、ノートと「家族と話すこと」から用意します。</p><button type="button" class="btn wide" id="doBook">銀行の相談員に相談する<small>無料・話すことを用意して予約</small></button>${hs.pro&&hs.pro.length?`<button type="button" class="btn wide" id="doPro">${hs.pro.join("・")}を探す<small>そうぞくガイドの専門家さがし</small></button>`:""}</div></div></li>`:""}
@@ -570,7 +571,7 @@ map(){
     <li>はじめの画面（続きがあれば「続きから始める」）</li>
     <li>質問（1画面に1問。「次へ」で画面が切り替わる。「戻る」で前の質問へ）：気になること → 選んだものに関係する質問だけ</li>
     <li>整理：やることの数、最初の一歩、ノートのどのページに書き込まれるか</li>
-    <li>やること：一人でやること → 家族がそろう日に、ノートを開いて話す（一歩でも進めば日を決められる）→ 必要なら家族で相談（銀行・専門家）。一人で決められなかった答えや書かずに進んだ一歩は「家族と話すこと（一緒に考えたい）」に、書いたことは「家族と話すこと（伝えたい）」にたまる。いまのステップだけ、その場で作業する
+    <li>やること：一人でやること → 家族がそろう日に、ノートを開いて話す（一人でやることを終えたら日を決める。決める画面の上には「やること ＞ 家族がそろう日」と「やることに戻る」を常に表示）→ 必要なら家族で相談（銀行・専門家）。一人で決められなかった答えや書かずに進んだ一歩は「家族と話すこと（一緒に考えたい）」に、書いたことは「家族と話すこと（伝えたい）」にたまる。いまのステップだけ、その場で作業する
       <br>種類：書いてノートに残す／読んで、決めたことを残す／その場で分かる／人に相談する</li>
     <li>エンディングノート：8ページ。終えたステップの結果が書き込まれる → 家族に渡す（LINE・印刷・わが家ノート）</li>
     <li>家族がそろう日を決める（1画面1問）：集まり → 時期 → 誰と → 話したいこと（3つまで）→（家族旅行のみ）行き先 → 部屋 → 計画。家族旅行は「旅行の予約サービス（提携・架空）」に引き継ぎシートを渡す（ノートの中身は渡さない）。家族をLINEで誘う文面を用意</li>
@@ -639,7 +640,9 @@ function sideFor(name){
   if(name==="book")return `<div class="card"><h2 style="font-size:17px">予約のあと</h2><p class="small">相談員から、選んだ方法でご連絡します。ノートと話すことは、相談の日まで残ります。</p></div>`;
   return "";
 }
-function render(){side("");(V[S.screen]||V.home)();side(sideFor(S.screen));if($("sideBook"))$("sideBook").onclick=()=>show("book");if($("sideTogether"))$("sideTogether").onclick=()=>show("together");}
+const SUBFLOW={gather:"家族がそろう日を決める",plan:"家族がそろう日の計画",handoff:"旅行の予約に引き継ぐ",invite:"家族を誘う"};
+function crumb(){if(!SUBFLOW[S.screen]||!S.worries.length)return;$("screen").insertAdjacentHTML("afterbegin",`<nav class="crumb" aria-label="いまいる場所"><span>やること ＞ <b>${SUBFLOW[S.screen]}</b></span><button type="button" class="btn sm" id="crumbBack">やることに戻る</button></nav>`);$("crumbBack").onclick=()=>show("route")}
+function render(){side("");(V[S.screen]||V.home)();crumb();side(sideFor(S.screen));if($("sideBook"))$("sideBook").onclick=()=>show("book");if($("sideTogether"))$("sideTogether").onclick=()=>show("together");}
 $("ov").onclick=()=>{$("ov").hidden=true};
 $("askBtn").onclick=()=>{if(S.screen!=="book")show("book")};
 render();
