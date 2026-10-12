@@ -653,7 +653,7 @@ pro(){
   $("screen").innerHTML=`
    <h1>専門家を探す</h1>
    <p class="lead">相続にくわしい事務所を、お住まいの地域から探せます。</p>
-   ${list.map(p=>`<section class="panel"><h2 style="font-size:18px">${p}</h2><dl class="dl"><dt>こんなとき</dt><dd>${PROINFO[p].role}</dd><dt>費用の目安</dt><dd>${PROINFO[p].fee}</dd></dl></section>`).join("")}
+   ${list.map(p=>`<section class="panel"><h2 style="font-size:18px">${p}</h2><dl class="dl"><dt>こんなとき</dt><dd>${PROINFO[p].role}</dd></dl></section>`).join("")}
    <p class="note">試作品のため、この先は既存の「専門家をさがす」画面を想定しています。</p>`;
   bar([{id:"n",label:"地域から探す",cls:"primary",on:back},{id:"b",label:backLabel(),cls:"back",on:back}]);
 },
