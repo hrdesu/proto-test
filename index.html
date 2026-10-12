@@ -230,6 +230,14 @@ const ROUTES={
   {id:"0010",t:"銀行の相談員に、家や土地の引き継ぎ方を聞く",k:"human",time:"30分",pro:["司法書士","税理士"]}]
 };
 const TALK={family:"うちの相続人が誰になるか、知ってる？",money:"通帳や保険の場所、知ってる？",tax:"相続税のこと、気になったことある？",land:"この家や土地、この先どうしたらいいと思う？",leave:"残してほしいもの、何かある？",care:"もしものとき、どうしてほしいか話しておこうか",words:"お互いに、伝えておきたいことある？",things:"片付け、いつか手伝ってもらえる？"};
+const KINDS=["家族旅行","帰省","誕生日などのお祝い"];
+const WHO=["夫・妻","子どもたち","孫たち","兄弟"];
+const DEST=["近場の温泉","思い出の場所","子どもの住む町の近く","おまかせ"];
+const ROOM=["家族で話せる部屋（個室・和室）","特に希望はない"];
+function months(){const d=new Date();const out=[];for(let i=1;i<=6;i++){const m=new Date(d.getFullYear(),d.getMonth()+i,1);out.push(`${m.getMonth()+1}月`)}return out}
+function gSteps(){return S.plan.kind==="家族旅行"?["kind","month","who","topics","dest","room"]:["kind","month","who","topics"]}
+function planTitle(){const p=S.plan;return p.kind?`${p.month||""}の${p.kind}`:""}
+function planDone(){const p=S.plan;return !!(p.kind&&p.month&&p.who&&p.who.length&&p.topics&&p.topics.length&&(p.kind!=="家族旅行"||(p.dest&&p.room)))}
 const KIND={write:"書いてノートに残す",decide:"読んで、決めたことを残す",calc:"その場で分かる",human:"人に相談する"};
 const PROINFO={"弁護士":{role:"家族の間で意見が分かれそうなとき、遺言の内容を一緒に考えたいとき",fee:"相談は1時間1万円前後から（事務所により異なります）"},
 "税理士":{role:"相続税の正確な計算や、申告、贈与の進め方の相談",fee:"相続税の申告は、財産の0.7〜1%程度が目安です"},
@@ -255,13 +263,13 @@ function taxResult(A){
   return{level:"maybe",title:"財産の額しだいで、かかるかもしれません",body:`預金や株の額が、基礎控除（${f}万円）前後です。`};
 }
 const KEY="yorisoi-proto-v9";
-const FRESH=()=>({screen:"home",hist:[],worries:[],ans:{},qi:0,done:{},notes:{},draft:{},pick:{},flash:"",lastDone:null,contact:null,consent:false,err:"",confirmReset:false});
+const FRESH=()=>({screen:"home",hist:[],worries:[],ans:{},qi:0,done:{},notes:{},draft:{},pick:{},flash:"",lastDone:null,contact:null,consent:false,err:"",confirmReset:false,plan:{},gi:0});
 let S=FRESH();
 try{const raw=localStorage.getItem(KEY);if(raw){const d=JSON.parse(raw);if(d&&d.worries)S={...FRESH(),...d,screen:"home",hist:[],err:"",flash:""}}}catch(e){}
-function persist(){try{localStorage.setItem(KEY,JSON.stringify({worries:S.worries,ans:S.ans,qi:S.qi,done:S.done,notes:S.notes,draft:S.draft}))}catch(e){}}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify({worries:S.worries,ans:S.ans,qi:S.qi,done:S.done,notes:S.notes,draft:S.draft,plan:S.plan}))}catch(e){}}
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const NAMES={home:"はじめの画面",together:"家族と一緒に開く",q:"前の質問",summary:"整理した内容",route:"あなたの道のり",note:"エンディングノート",book:"相談の予約",pro:"専門家を探す",send:"家族に渡す",map:"画面マップ",self:"自分で調べる"};
+const NAMES={home:"はじめの画面",gather:"家族がそろう日を決める画面",plan:"家族がそろう日の計画",handoff:"旅行の予約に引き継ぐ",invite:"家族を誘う",together:"家族と一緒に開く",q:"前の質問",summary:"整理した内容",route:"あなたの道のり",note:"エンディングノート",book:"相談の予約",pro:"専門家を探す",send:"家族に渡す",map:"画面マップ",self:"自分で調べる"};
 function show(name,opt){S.hist.push({screen:S.screen,qi:S.qi});S.screen=name;if(opt&&opt.qi!=null)S.qi=opt.qi;S.err="";S.confirmReset=false;persist();render();window.scrollTo(0,0);const c=cueFor(name);if(c[0])cue(c[0],c[1])}
 function back(){const h=S.hist.pop();if(h){S.screen=h.screen;S.qi=h.qi}else S.screen="home";S.err="";persist();render();window.scrollTo(0,0);const c=cueFor(S.screen);if(c[0])cue(c[0],"前の画面に戻りました")}
 function backLabel(){const h=S.hist[S.hist.length-1];if(!h)return "← 戻る";const n=h.screen==="q"?(h.qi===0?"気になることを選ぶ画面":`質問${h.qi}`):(NAMES[h.screen]||"前の画面");return `← 戻る<small>${n}へ</small>`}
@@ -284,8 +292,9 @@ function side(html){$("aside").innerHTML=html||""}
 let ovTimer=null;
 function cue(main,sub){const o=$("ov");$("ovMain").textContent=main;$("ovSub").textContent=sub||"";o.hidden=false;o.classList.remove("show");void o.offsetWidth;o.classList.add("show");clearTimeout(ovTimer);ovTimer=setTimeout(()=>{o.hidden=true;o.classList.remove("show")},1300)}
 function cueFor(name){
+  if(name==="gather"){const n=gSteps().length;return [`${S.gi+1} / ${n}`,"家族がそろう日を決めます"]}
   if(name==="q"){const n=qList().length;return S.qi===0?["気になることを選びます","はじめに"]:[`質問 ${S.qi} / ${n}`,"次の質問です"]}
-  return ({summary:["やることを整理しました","答え終わりました"],route:["あなたのやること","画面が変わりました"],together:["家族と一緒に開く","旅行や帰省で、家族がそろったときに"],note:["エンディングノート","画面が変わりました"],send:["家族に渡す","画面が変わりました"],book:["銀行に相談する","画面が変わりました"],pro:["専門家を探す","画面が変わりました"],home:["はじめの画面","画面が変わりました"],self:["自分で調べる","画面が変わりました"],map:["画面マップ","確認用"]})[name]||["",""];
+  return ({summary:["やることを整理しました","答え終わりました"],route:["あなたのやること","画面が変わりました"],together:["家族と一緒に開く","旅行や帰省で、家族がそろったときに"],plan:["家族がそろう日の計画","画面が変わりました"],handoff:["旅行の予約に引き継ぐ","画面が変わりました"],invite:["家族を誘う","画面が変わりました"],note:["エンディングノート","画面が変わりました"],send:["家族に渡す","画面が変わりました"],book:["銀行に相談する","画面が変わりました"],pro:["専門家を探す","画面が変わりました"],home:["はじめの画面","画面が変わりました"],self:["自分で調べる","画面が変わりました"],map:["画面マップ","確認用"]})[name]||["",""];
 }
 function toolText(s){
   if(s.tool==="heirs"){const h=heirs(S.ans);return h.n?`法定相続人は ${h.n}人${h.approx?"以上":""}（${h.who}）`:h.who}
@@ -368,13 +377,15 @@ route(){
        <b>${plain(s.t)}</b><span class="small">${S.done[s.id]?"終わりました":i===cur?`いまここ・${s.time}ほど・${KIND[s.k]}`:`このあと・${s.time}ほど・${KIND[s.k]}`}</span>
        ${s.page?`<span class="goes">ノートの「${pageName(s.page)}」に${S.done[s.id]?"書きました":"書き込まれます"}</span>`:""}
        ${i===cur?work(s):""}
-     </div></li>`}).join("")}<li class="${done?"now":""}"><span class="dot" aria-hidden="true">${all.length+1}</span><div class="st"><b>ノートを家族と一緒に開く</b><span class="small">旅行や帰省で、家族がそろったときに</span>${done?`<div class="work"><p>ここまでで、ノートに${filledPages()}ページ書き込みました。次に家族と会うとき、一緒に開いてみましょう。</p><button type="button" class="btn primary wide" id="goTogether">家族と一緒に開く</button></div>`:""}</div></li></ol>
+     </div></li>`}).join("")}<li class="${done?"now":""}"><span class="dot" aria-hidden="true">${all.length+1}</span><div class="st"><b>${planDone()?`${planTitle()}で、ノートを一緒に開く`:"家族がそろう日を決めて、ノートを一緒に開く"}</b><span class="small">家族旅行や帰省など、家族がそろうときに</span>${done?`<div class="work">${planDone()?`<p>${planTitle()}に、家族とノートを開きましょう。話したいことは決めてあります。</p><button type="button" class="btn primary wide" id="goTogether">家族と一緒に開く<small>当日はこちら</small></button><button type="button" class="btn wide" id="goPlan">計画を見る</button>`:`<p>ここまでで、ノートに${filledPages()}ページ書き込みました。次は、家族がそろう日を決めて、ノートを一緒に開きましょう。</p><button type="button" class="btn primary wide" id="goGather">家族がそろう日を決める<small>旅行・帰省・お祝い</small></button>`}</div>`:""}</div></li></ol>
    <div class="notecard"><div><p style="font-weight:700">わたしのエンディングノート</p><p class="small">${filledPages()}ページ書き込みました</p></div><div style="display:flex;flex-direction:column;gap:8px"><button type="button" class="btn sm" id="openNote">ノートを見る</button><button type="button" class="btn sm" id="openTogether">家族と開く</button></div></div>
    ${done&&nextW?`<div class="card"><p style="font-weight:700">次は「${wById(nextW).short}」に進めます</p><button type="button" class="btn primary wide" id="nextW">こちらを始める</button></div>`:""}`;
   bindWork(all,cur);
   $("openNote").onclick=()=>show("note");
   $("openTogether").onclick=()=>show("together");
   if($("goTogether"))$("goTogether").onclick=()=>show("together");
+  if($("goPlan"))$("goPlan").onclick=()=>show("plan");
+  if($("goGather"))$("goGather").onclick=()=>{S.gi=0;show("gather")};
   if($("undo"))$("undo").onclick=()=>{const id=S.lastDone;delete S.done[id];delete S.notes[id];S.flash="";S.lastDone=null;persist();render()};
   if($("nextW"))$("nextW").onclick=()=>{S.worries=[nextW,...S.worries.filter(x=>x!==nextW)];S.flash="";S.lastDone=null;persist();show("route")};
   bar([{id:"b",label:backLabel(),cls:"back",on:back},{id:"n",label:"ノートを家族に渡す<small>LINE・印刷</small>",cls:"",on:()=>show("send")}]);
@@ -390,22 +401,88 @@ note(){
   bar([{id:"b",label:backLabel(),cls:"back",on:back},{id:"n",label:"家族に渡す<small>LINE・印刷</small>",cls:"primary",on:()=>show("send")},{id:"t",label:"家族と一緒に開く<small>旅行や帰省のときに</small>",cls:"",on:()=>show("together")}]);
 },
 together(){
-  const order=[...PAGES.filter(([p])=>!Object.values(S.notes).some(n=>n.page===p)),...PAGES.filter(([p])=>Object.values(S.notes).some(n=>n.page===p))].slice(0,3);
+  const order=planDone()?PAGES.filter(([p])=>S.plan.topics.includes(p)):[...PAGES.filter(([p])=>!Object.values(S.notes).some(n=>n.page===p)),...PAGES.filter(([p])=>Object.values(S.notes).some(n=>n.page===p))].slice(0,3);
   $("screen").innerHTML=`<div class="bigmode">
-   <p class="qno">旅行や帰省で、家族がそろったときに</p>
+   <p class="qno">${planDone()?planTitle():"旅行や帰省で、家族がそろったときに"}</p>
    <h1>家族と一緒に<br>ノートを開く</h1>
+   ${planDone()?"":`<div class="card"><p>まだ、家族がそろう日を決めていません。先に日を決めて家族を誘っておくと、話しやすくなります。</p><button type="button" class="btn wide" id="tGather">家族がそろう日を決める</button></div>`}
    <p class="lead">画面を見せながら、話してみてください。話したことは、どちらが書いても大丈夫です。</p>
-   <h2>家族で話してみること</h2>
+   <h2>${planDone()?"この日に話したいこと":"家族で話してみること"}</h2>
    ${order.map(([p,name],i)=>`<div class="card talk"><p class="small">${i+1}.「${name}」のページ</p><p class="talkq">${TALK[p]}</p>
      <label for="ft_${p}" class="small">話したことを書く</label><textarea id="ft_${p}" data-fp="${p}" placeholder="例：通帳はタンスの引き出し、と聞いた">${esc(S.draft["fam_"+p]||"")}</textarea>
      <button type="button" class="btn primary wide" data-fsave="${p}">ノートに書く<small>「${name}」のページに書き込まれます</small></button></div>`).join("")}
    <h2>いまのノート</h2>
    ${PAGES.filter(([p])=>Object.values(S.notes).some(n=>n.page===p)).map(([p,name])=>`<section class="page"><h2>${name}</h2>${Object.values(S.notes).filter(n=>n.page===p).map(n=>`<div class="entry"><b>${esc(n.label)}</b>${esc(n.text)}</div>`).join("")}</section>`).join("")||'<p class="small">まだ書き込まれたページはありません。上の質問から始めてみましょう。</p>'}
    </div>`;
+  if($("tGather"))$("tGather").onclick=()=>{S.gi=0;show("gather")};
   document.querySelectorAll("[data-fp]").forEach(t=>t.oninput=()=>{S.draft["fam_"+t.dataset.fp]=t.value;persist()});
   document.querySelectorAll("[data-fsave]").forEach(b=>b.onclick=()=>{const p=b.dataset.fsave;const v=($("ft_"+p).value||"").trim();if(!v){$("ft_"+p).focus();return}
     S.notes["fam_"+p+"_"+Date.now()]={page:p,label:"家族と話したこと",text:v};delete S.draft["fam_"+p];persist();render();window.scrollTo(0,0);cue(`ノートの「${pageName(p)}」に書きました`,"家族と話したことを")});
   bar([{id:"b",label:backLabel(),cls:"back",on:back},{id:"n",label:"家族で銀行に相談する<small>無料・話すことを用意して予約</small>",cls:"",on:()=>show("book")}]);
+},
+gather(){
+  const steps=gSteps();const k=steps[S.gi];const p=S.plan;const n=steps.length;
+  const prog=`<div class="prog" aria-hidden="true">${steps.map((_,i)=>`<i class="${i<=S.gi?"on":""}"></i>`).join("")}</div>`;
+  const opt=(list,cur,key,multi)=>`<div class="choice">${list.map(([v,l])=>`<button type="button" class="opt ${multi?"":"round"}" aria-pressed="${multi?(cur||[]).includes(v):cur===v}" data-g="${key}" data-v="${esc(v)}" data-m="${multi?1:0}"><span class="box">${multi?"✓":"●"}</span><span>${l}</span></button>`).join("")}</div>`;
+  const pairs=a=>a.map(x=>[x,x]);
+  const Qs={
+   kind:["どんな集まりにしますか？","家族がそろうときに、ノートを一緒に開きます。",opt(pairs(KINDS),p.kind,"kind")],
+   month:["いつごろにしますか？","おおよその時期で大丈夫です。",opt(pairs(months()),p.month,"month")],
+   who:["誰と集まりますか？","いくつ選んでも大丈夫です。",opt(pairs(WHO),p.who,"who",true)],
+   topics:["その日に、家族と話したいことは？","3つまで選べます。まだ書いていないページから選ぶのがおすすめです。",opt(PAGES.map(([pg,nm])=>[pg,`${nm}<br><span class="small">「${TALK[pg]}」</span>`]),p.topics,"topics",true)],
+   dest:["行き先の希望は？","予約のときに、旅行の予約サービスに伝えます。",opt(pairs(DEST),p.dest,"dest")],
+   room:["部屋の希望は？","家族でゆっくり話せる部屋もあります。",opt(pairs(ROOM),p.room,"room")]
+  };
+  const [q,lead,body]=Qs[k];
+  $("screen").innerHTML=`${prog}<p class="qno">家族がそろう日を決める（${S.gi+1} / ${n}）</p><h1>${q}</h1><p class="lead">${lead}</p>${S.err?`<p class="err" role="alert">${S.err}</p>`:""}${body}`;
+  document.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{const key=b.dataset.g,v=b.dataset.v;
+    if(b.dataset.m==="1"){let a=Array.isArray(p[key])?p[key].slice():[];if(a.includes(v))a=a.filter(x=>x!==v);else{if(key==="topics"&&a.length>=3){S.err="話したいことは3つまでです。";V.gather();return}a.push(v)}p[key]=a}else p[key]=v;
+    S.err="";persist();V.gather()});
+  const last=S.gi===n-1;
+  bar([{id:"b",label:S.gi===0?backLabel():`← 戻る<small>${S.gi} / ${n} へ</small>`,cls:"back",on:()=>{if(S.gi===0){back();return}S.gi--;S.err="";render();window.scrollTo(0,0);cue(`${S.gi+1} / ${gSteps().length}`,"前に戻りました")}},
+   {id:"n",label:last?"計画をまとめる":`次へ<small>次は ${S.gi+2} / ${n}</small>`,cls:"primary",on:()=>{
+    const v=p[k];if(!v||(Array.isArray(v)&&!v.length)){S.err="1つ選んでください。";V.gather();return}
+    if(last){show("plan");return}
+    S.gi++;S.err="";persist();render();window.scrollTo(0,0);cue(`${S.gi+1} / ${gSteps().length}`,"家族がそろう日を決めます")}}]);
+},
+plan(){
+  const p=S.plan;const trip=p.kind==="家族旅行";
+  $("screen").innerHTML=`
+   <p class="qno">家族がそろう日の計画</p>
+   <h1>${planTitle()}で<br>ノートを一緒に開きましょう</h1>
+   <div class="card"><dl class="dl"><dt>集まり</dt><dd>${esc(p.kind)}</dd><dt>時期</dt><dd>${esc(p.month)}ごろ</dd><dt>誰と</dt><dd>${esc((p.who||[]).join("、"))}</dd>${trip?`<dt>行き先</dt><dd>${esc(p.dest)}</dd><dt>部屋</dt><dd>${esc(p.room)}</dd>`:""}<dt>話したいこと</dt><dd>${PAGES.filter(([x])=>(p.topics||[]).includes(x)).map(([,nm])=>nm).join("、")}</dd></dl>
+   <button type="button" class="link" id="editPlan">計画を直す</button></div>
+   <h2>次にすること</h2>
+   ${trip?`<div class="card"><p style="font-weight:700">1. 旅行の予約サービスに引き継ぐ${p.handed?"（引き継ぎ済み）":""}</p><p class="small">時期・人数・行き先と部屋の希望をまとめて渡します。最初から入力し直す必要はありません。</p><button type="button" class="btn ${p.handed?"":"primary"} wide" id="goHand">${p.handed?"引き継いだ内容を見る":"予約に引き継ぐ"}</button></div>`:""}
+   <div class="card"><p style="font-weight:700">${trip?"2":"1"}. 家族を誘う${p.invited?"（送信済み）":""}</p><p class="small">LINEで送る文面を用意しました。直してから送れます。</p><button type="button" class="btn ${p.invited?"":"primary"} wide" id="goInvite">${p.invited?"送った内容を見る":"家族を誘う"}</button></div>
+   <div class="card"><p style="font-weight:700">${trip?"3":"2"}. 当日、ノートを一緒に開く</p><p class="small">話したいことが、大きな文字で出ます。</p><button type="button" class="btn wide" id="goTog">家族と一緒に開く</button></div>`;
+  $("editPlan").onclick=()=>{S.gi=0;show("gather")};
+  if($("goHand"))$("goHand").onclick=()=>show("handoff");
+  $("goInvite").onclick=()=>show("invite");$("goTog").onclick=()=>show("together");
+  bar([{id:"b",label:backLabel(),cls:"back",on:back},{id:"n",label:"やることに戻る",cls:"",on:()=>show("route")}]);
+},
+handoff(){
+  const p=S.plan;const n=(p.who||[]).length;
+  $("screen").innerHTML=`
+   <p class="qno">旅行の予約サービス（提携・架空）</p>
+   <h1>この内容で<br>予約に引き継ぎます</h1>
+   <div class="card"><h2 style="font-size:18px">引き継ぎシート</h2><dl class="dl"><dt>目的</dt><dd>家族で集まり、ゆっくり話す時間をつくる旅行</dd><dt>時期</dt><dd>${esc(p.month)}ごろ</dd><dt>誰と</dt><dd>${esc((p.who||[]).join("、"))}（人数は予約のときに確かめます）</dd><dt>行き先</dt><dd>${esc(p.dest)}</dd><dt>部屋</dt><dd>${esc(p.room)}</dd></dl></div>
+   <div class="card"><p style="font-weight:700">予約サービスに伝わらないもの</p><p class="small">ノートの中身と「話したいこと」は、予約サービスには伝わりません。</p></div>
+   <p class="note">試作品のため、実在しない予約サービスを想定しています。実際の予約は行われません。</p>`;
+  bar([{id:"b",label:backLabel(),cls:"back",on:back},{id:"n",label:p.handed?"計画に戻る":"この内容で引き継ぐ",cls:"primary",on:()=>{if(!p.handed){p.handed=true;persist();show("plan");cue("予約に引き継ぎました","旅行の予約サービスから連絡が届きます（試作）")}else show("plan")}}]);
+},
+invite(){
+  const p=S.plan;
+  const def=`${p.month}ごろ、${p.kind==="家族旅行"?"みんなで旅行に行かない？":p.kind==="帰省"?"帰ってこられる？":"お祝いに集まらない？"}\nそのとき、お母さんの書いているノートを一緒に見てほしいの。\n話したいこと：${PAGES.filter(([x])=>(p.topics||[]).includes(x)).map(([,nm])=>nm).join("、")}`;
+  const v=S.draft.invite!=null?S.draft.invite:def.replace(/\\n/g,"\n");
+  $("screen").innerHTML=`
+   <p class="qno">家族を誘う</p>
+   <h1>LINEで送る文面を<br>用意しました</h1>
+   <div class="field"><label for="inv">送る文面（直せます）</label><textarea id="inv" style="min-height:180px">${esc(v)}</textarea></div>
+   <p class="small">「お母さん」の部分などは、ご自分の呼ばれ方に直してください。</p>
+   <p class="note">試作品のため、実際の送信は行われません。</p>`;
+  $("inv").oninput=()=>{S.draft.invite=$("inv").value;persist()};
+  bar([{id:"b",label:backLabel(),cls:"back",on:back},{id:"n",label:"LINEで送る",cls:"primary",on:()=>{p.invited=true;persist();show("plan");cue("家族に送りました","LINEで（試作）")}}]);
 },
 send(){
   $("screen").innerHTML=`
@@ -467,6 +544,7 @@ map(){
     <li>やること：全ステップの名前は最初から見える（最後は「ノートを家族と一緒に開く」）。いまのステップだけ、その場で作業する
       <br>種類：書いてノートに残す／読んで、決めたことを残す／その場で分かる／人に相談する</li>
     <li>エンディングノート：8ページ。終えたステップの結果が書き込まれる → 家族に渡す（LINE・印刷・わが家ノート）</li>
+    <li>家族がそろう日を決める（1画面1問）：集まり → 時期 → 誰と → 話したいこと（3つまで）→（家族旅行のみ）行き先 → 部屋 → 計画。家族旅行は「旅行の予約サービス（提携・架空）」に引き継ぎシートを渡す（ノートの中身は渡さない）。家族をLINEで誘う文面を用意</li>
     <li>家族と一緒に開く（旅行・帰省のとき）：文字を大きく、空いているページに合わせた「家族で話してみること」3つ。話したことをノートに書ける → 家族で銀行に相談</li>
     <li>人に相談する：銀行の相談員（話すことを用意して予約）または専門家を探す</li>
    </ol></div>
@@ -520,7 +598,7 @@ function sideFor(name){
     qs.forEach((id,i)=>{if(i<S.qi-1&&S.ans[id])rows.push(`<p><span class="small">${Q[id].short}</span><br>${Array.isArray(S.ans[id])?S.ans[id].join("・"):S.ans[id]}</p>`)});
     return `<div class="card"><h2 style="font-size:17px">これまでの答え</h2>${rows.join("")||'<p class="small">まだありません</p>'}<p class="small">「戻る」で前の質問に戻って、選び直せます。</p></div>`}
   if(name==="together")return notePrev();
-  if(name==="summary"||name==="route"||name==="send")return notePrev()+(name==="route"?`<div class="card"><p style="font-weight:700">迷ったら、銀行に相談</p><p class="small">相続にくわしい相談員が、無料でお話を聞きます。</p><button type="button" class="btn wide" id="sideBook">銀行に相談する</button></div><div class="card"><p style="font-weight:700">家族がそろうときに</p><p class="small">旅行や帰省のとき、ノートを一緒に開いて話せます。</p><button type="button" class="btn wide" id="sideTogether">家族と一緒に開く</button></div>`:"");
+  if(name==="summary"||name==="route"||name==="send")return notePrev()+(name==="route"?`<div class="card"><p style="font-weight:700">迷ったら、銀行に相談</p><p class="small">相続にくわしい相談員が、無料でお話を聞きます。</p><button type="button" class="btn wide" id="sideBook">銀行に相談する</button></div><div class="card"><p style="font-weight:700">家族がそろうときに</p><p class="small">${planDone()?planTitle()+"に、ノートを一緒に開きます。":"家族旅行や帰省の日を決めて、ノートを一緒に開けます。"}</p><button type="button" class="btn wide" id="sideTogether">家族と一緒に開く</button></div>`:"");
   if(name==="book")return `<div class="card"><h2 style="font-size:17px">予約のあと</h2><p class="small">相談員から、選んだ方法でご連絡します。ノートと話すことは、相談の日まで残ります。</p></div>`;
   return "";
 }
