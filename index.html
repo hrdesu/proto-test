@@ -130,6 +130,27 @@ textarea{font:inherit;font-size:18px;width:100%;min-height:120px;border:3px soli
 .tag.tell{background:var(--ok-soft);color:var(--ok)}
 .work.later{border-style:dashed;border-color:var(--line);background:var(--bg)}
 .crumb{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:15px}
+.seg{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.hwrap{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center}
+.hscroll{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding:6px 2px 14px}
+.hcard{flex:none;width:300px;scroll-snap-align:start;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.hcard.now{width:440px;border:2px solid var(--accent)}
+.hcard.done{opacity:.75}
+.hcard .work{margin-top:4px}
+.dot.sm{display:inline-grid;width:22px;height:22px;border-width:2px;font-size:12px;vertical-align:-5px}
+.hcard.done .dot.sm{border-color:var(--ok);background:var(--ok);color:var(--card)}
+.hcard.now .dot.sm{border-color:var(--accent);background:var(--accent);color:var(--card)}
+.overview{list-style:none;margin:0;padding:0;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:0;position:relative}
+.overview li{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;font-size:13px;line-height:1.4;position:relative;padding:0 4px}
+.overview li::before{content:"";position:absolute;top:16px;left:-50%;width:100%;height:3px;background:var(--line);z-index:0}
+.overview li:first-child::before{display:none}
+.overview li.done::before,.overview li.now::before{background:var(--ok)}
+.overview .dot{position:relative;z-index:1}
+.overview li.done .dot{border-color:var(--ok);background:var(--ok);color:var(--card)}
+.overview li.now .dot{border-color:var(--accent);background:var(--accent);color:var(--card);box-shadow:0 0 0 5px var(--accent-soft)}
+.overview li.now .ovt{font-weight:700;color:var(--accent-ink)}
+.nowbox{background:var(--card);border:2px solid var(--accent);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:10px}
+.nowbox .work{border:0;padding:0;margin:0}
 .agenda{margin:0;padding-left:1.3em}
 .agenda li{margin:4px 0}
 .consent{display:flex;gap:12px;align-items:flex-start;font-size:16px}
@@ -286,6 +307,7 @@ function rich(t){return esc(t||"").replace(/\[\[(.+?)\]\]/g,(m,k)=>`<span class=
 function glossBlock(...f){const ks=[];f.forEach(x=>(x||"").replace(/\[\[(.+?)\]\]/g,(m,k)=>{if(!ks.includes(k))ks.push(k)}));return ks.map(k=>`<div class="gloss"><b>「${k}」とは</b>${GLOSS[k]}</div>`).join("")}
 function qList(){const out=[];S.worries.forEach(w=>QOF[w].forEach(id=>{if(!out.includes(id))out.push(id)}));return out.filter(id=>!Q[id].if||Q[id].if(S.ans))}
 function routeOf(w){return ROUTES[w].filter(s=>!s.if||s.if(S.ans))}
+const RM=()=>!!(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 const UNSURE=/わからない|まだ|足りない|相談|知らない|いない/;
 function selfSteps(all){return all.filter(x=>x.k!=="human")}
 function humanStep(all){return all.find(x=>x.k==="human")}
@@ -383,29 +405,45 @@ summary(){
 },
 route(){
   const w=S.worries[0];const all=routeOf(w);const ss=selfSteps(all);const hs=humanStep(all);const cur=curIndex(ss);const done=cur>=ss.length;
-  const started=ss.some(x=>S.done[x.id]);const tl=topicItems();const asks=tl.filter(x=>x.kind==="ask").length;
+  const tl=topicItems();const asks=tl.filter(x=>x.kind==="ask").length;
   const nextW=S.worries.find(x=>x!==w&&curIndex(selfSteps(routeOf(x)))<selfSteps(routeOf(x)).length);
-  const famNo=ss.length+1,conNo=ss.length+2;
-  $("screen").innerHTML=`
+  const pc=window.matchMedia&&window.matchMedia("(min-width:900px)").matches;const L=pc?(S.pcLayout||"b"):"v";
+  const famTitle=planDone()?`${planTitle()}に、家族とノートを開いて話す`:"家族がそろう日を決めて、ノートを一緒に開いて話す";
+  const famBody=done?`<div class="work">${planDone()?`<p>話したいことは決めてあります（${(S.plan.topics||[]).length}件）。</p><button type="button" class="btn primary wide" id="goTogether">家族と一緒に開く<small>当日はこちら</small></button><button type="button" class="btn wide" id="goPlan">計画を見る</button>`:`<p>${tl.length?`「家族と話すこと」が${tl.length}件たまっています${asks?`（うち一緒に考えたいこと${asks}件）`:""}。`:""}家族がそろう日を決めて、誘いましょう。</p><button type="button" class="btn primary wide" id="goGather">家族がそろう日を決める<small>旅行・帰省・お祝い</small></button>`}</div>`:`<span class="small">一人でやることが終わったら、ここで家族がそろう日を決めます。${tl.length?`それまでに「家族と話すこと」がたまっていきます。`:""}</span>`;
+  const conTitle=hs?`必要なら、家族で${plain(hs.t).replace(/^(銀行の相談員に、|銀行の相談員と、)/,"銀行の相談員や専門家と、")}`:"";
+  const conBody=hs?`<div class="work later"><p>話すことは、ノートと「家族と話すこと」から用意します。</p><button type="button" class="btn wide" id="doBook">銀行の相談員に相談する<small>無料・話すことを用意して予約</small></button>${hs.pro&&hs.pro.length?`<button type="button" class="btn wide" id="doPro">${hs.pro.join("・")}を探す<small>そうぞくガイドの専門家さがし</small></button>`:""}</div>`:"";
+  const status=(s,i)=>S.done[s.id]?"終わりました":i===cur?`いまここ・${s.time}ほど・${KIND[s.k]}`:`このあと・${s.time}ほど・${KIND[s.k]}`;
+  const goes=s=>s.page?`<span class="goes">ノートの「${pageName(s.page)}」に${S.done[s.id]?"書きました":"書き込まれます"}</span>`:"";
+  const stops=[...ss.map((s,i)=>({key:"s"+i,no:i+1,title:plain(s.t),st:S.done[s.id]?"done":i===cur?"now":"",sub:status(s,i),extra:goes(s),body:i===cur?work(s):""})),
+    {key:"fam",no:ss.length+1,title:famTitle,st:done?"now":"",sub:(done?"いまここ・":"")+"家族旅行や帰省など、家族がそろうときに",extra:"",body:famBody},
+    ...(hs?[{key:"con",no:ss.length+2,title:conTitle,st:"",sub:`家族と話したあとがおすすめ・${KIND.human}`,extra:"",body:conBody}]:[])];
+  const head=`
+   ${pc?`<div class="seg" role="group" aria-label="PCの並べ方（比較用）"><span class="small">PCの並べ方（比較用）</span><button type="button" class="chip" aria-pressed="${L==="a"}" data-lay="a">A 横スクロール</button><button type="button" class="chip" aria-pressed="${L==="b"}" data-lay="b">B 全体図</button></div>`:""}
    <p class="qno">あなたのやること：${wById(w).short}</p>
    <h1>${done?"一人でできることは<br>終わりました。<br>次は、家族と話しましょう":`いまやることは<br>「${plain(ss[cur].t)}」`}</h1>
    ${S.flash?`<p class="flash" role="status">✓ ${S.flash}${S.lastDone?`<button type="button" class="undo" id="undo">取り消す</button>`:""}</p>`:""}
-   ${tl.length?`<div class="card talkbox"><p style="font-weight:700">家族と話すこと（${tl.length}件）</p><ul class="talklist">${tl.map(x=>`<li><span class="tag ${x.kind}">${x.kind==="ask"?"一緒に考えたい":"伝えたい"}</span>${esc(x.text)}${x.talked?" ✓":""}</li>`).join("")}</ul></div>`:""}
-   <ol class="road">${ss.map((s,i)=>{const st=S.done[s.id]?"done":i===cur?"now":"";
-     return `<li class="${st}" id="st${i}"><span class="dot" aria-hidden="true">${S.done[s.id]?"✓":i+1}</span><div class="st" style="min-width:0">
-       <b>${plain(s.t)}</b><span class="small">${S.done[s.id]?"終わりました":i===cur?`いまここ・${s.time}ほど・${KIND[s.k]}`:`このあと・${s.time}ほど・${KIND[s.k]}`}</span>
-       ${s.page?`<span class="goes">ノートの「${pageName(s.page)}」に${S.done[s.id]?"書きました":"書き込まれます"}</span>`:""}
-       ${i===cur?work(s):""}
-     </div></li>`}).join("")}
-   <li class="${done?"now":""}" id="stFam"><span class="dot" aria-hidden="true">${famNo}</span><div class="st"><b>${planDone()?`${planTitle()}に、家族とノートを開いて話す`:"家族がそろう日を決めて、ノートを一緒に開いて話す"}</b><span class="small">${done?"いまここ・":""}家族旅行や帰省など、家族がそろうときに</span>
-     ${done?`<div class="work">${planDone()?`<p>話したいことは決めてあります（${(S.plan.topics||[]).length}件）。</p><button type="button" class="btn primary wide" id="goTogether">家族と一緒に開く<small>当日はこちら</small></button><button type="button" class="btn wide" id="goPlan">計画を見る</button>`:`<p>${tl.length?`「家族と話すこと」が${tl.length}件たまっています${asks?`（うち一緒に考えたいこと${asks}件）`:""}。`:""}家族がそろう日を決めて、誘いましょう。</p><button type="button" class="btn primary wide" id="goGather">家族がそろう日を決める<small>旅行・帰省・お祝い</small></button>`}</div>`:`<span class="small">一人でやることが終わったら、ここで家族がそろう日を決めます。${tl.length?`それまでに「家族と話すこと」がたまっていきます。`:""}</span>`}
-   </div></li>
-   ${hs?`<li id="stCon"><span class="dot" aria-hidden="true">${conNo}</span><div class="st"><b>必要なら、家族で${plain(hs.t).replace(/^(銀行の相談員に、|銀行の相談員と、)/,"銀行の相談員や専門家と、")}</b><span class="small">家族と話したあとがおすすめ・${KIND.human}</span>
-     <div class="work later"><p>話すことは、ノートと「家族と話すこと」から用意します。</p><button type="button" class="btn wide" id="doBook">銀行の相談員に相談する<small>無料・話すことを用意して予約</small></button>${hs.pro&&hs.pro.length?`<button type="button" class="btn wide" id="doPro">${hs.pro.join("・")}を探す<small>そうぞくガイドの専門家さがし</small></button>`:""}</div></div></li>`:""}
-   </ol>
+   ${tl.length?`<div class="card talkbox"><p style="font-weight:700">家族と話すこと（${tl.length}件）</p><ul class="talklist">${tl.map(x=>`<li><span class="tag ${x.kind}">${x.kind==="ask"?"一緒に考えたい":"伝えたい"}</span>${esc(x.text)}${x.talked?" ✓":""}</li>`).join("")}</ul></div>`:""}`;
+  let body="";
+  if(L==="v"){
+    body=`<ol class="road">${stops.map(o=>`<li class="${o.st}" id="st_${o.key}"><span class="dot" aria-hidden="true">${o.st==="done"?"✓":o.no}</span><div class="st" style="min-width:0"><b>${o.title}</b><span class="small">${o.sub}</span>${o.extra}${o.body}</div></li>`).join("")}</ol>`;
+  }else if(L==="a"){
+    body=`<div class="hwrap"><button type="button" class="btn sm" id="hPrev" aria-label="前のカードへ">← 前</button>
+      <div class="hscroll" id="hs" tabindex="0" aria-label="やることのカード（横に並んでいます）">${stops.map(o=>`<section class="hcard ${o.st}" id="card_${o.key}"><p class="small"><span class="dot sm" aria-hidden="true">${o.st==="done"?"✓":o.no}</span> ${o.no} / ${stops.length}</p><b>${o.title}</b><span class="small">${o.sub}</span>${o.extra}${o.body}</section>`).join("")}</div>
+      <button type="button" class="btn sm" id="hNext" aria-label="次のカードへ">次 →</button></div>
+      <p class="small">「← 前」「次 →」で、カードを横に送れます。</p>`;
+  }else{
+    const now=stops.find(o=>o.st==="now");
+    body=`<ol class="overview" aria-label="やることの全体">${stops.map(o=>`<li class="${o.st}"><span class="dot" aria-hidden="true">${o.st==="done"?"✓":o.no}</span><span class="ovt">${o.title}</span></li>`).join("")}</ol>
+      ${now?`<section class="nowbox"><p class="qno">いまやること（${now.no} / ${stops.length}）</p><h2>${now.title}</h2><span class="small">${now.sub}</span>${now.extra}${now.body}</section>`:""}
+      ${hs&&now&&now.key!=="con"?`<section class="card"><b>${conTitle}</b><span class="small">家族と話したあとがおすすめ</span>${conBody}</section>`:""}`;
+  }
+  $("screen").innerHTML=head+body+`
    <div class="notecard"><div><p style="font-weight:700">わたしのエンディングノート</p><p class="small">${filledPages()}ページ書き込みました</p></div><div style="display:flex;flex-direction:column;gap:8px"><button type="button" class="btn sm" id="openNote">ノートを見る</button></div></div>
    ${done&&nextW?`<div class="card"><p style="font-weight:700">ほかに選んだ「${wById(nextW).short}」も進められます</p><button type="button" class="btn wide" id="nextW">こちらを始める</button></div>`:""}`;
   bindWork(ss,cur);
+  document.querySelectorAll("[data-lay]").forEach(b=>b.onclick=()=>{S.pcLayout=b.dataset.lay;try{localStorage.setItem(KEY+"-lay",S.pcLayout)}catch(e){};render()});
+  if(L==="a"){const hsEl=$("hs");const nowEl=document.querySelector(".hcard.now");if(hsEl&&nowEl)requestAnimationFrame(()=>{hsEl.scrollLeft=Math.max(0,nowEl.offsetLeft-hsEl.offsetLeft-16)});
+    $("hPrev").onclick=()=>hsEl.scrollBy({left:-380,behavior:RM()?"auto":"smooth"});$("hNext").onclick=()=>hsEl.scrollBy({left:380,behavior:RM()?"auto":"smooth"})}
   $("openNote").onclick=()=>show("note");
   if($("goTogether"))$("goTogether").onclick=()=>show("together");
   if($("goPlan"))$("goPlan").onclick=()=>show("plan");
@@ -644,6 +682,8 @@ const SUBFLOW={gather:"家族がそろう日を決める",plan:"家族がそろ�
 function crumb(){if(!SUBFLOW[S.screen]||!S.worries.length)return;$("screen").insertAdjacentHTML("afterbegin",`<nav class="crumb" aria-label="いまいる場所"><span>やること ＞ <b>${SUBFLOW[S.screen]}</b></span><button type="button" class="btn sm" id="crumbBack">やることに戻る</button></nav>`);$("crumbBack").onclick=()=>show("route")}
 function render(){side("");(V[S.screen]||V.home)();crumb();side(sideFor(S.screen));if($("sideBook"))$("sideBook").onclick=()=>show("book");if($("sideTogether"))$("sideTogether").onclick=()=>show("together");}
 $("ov").onclick=()=>{$("ov").hidden=true};
+try{S.pcLayout=localStorage.getItem(KEY+"-lay")||"b"}catch(e){S.pcLayout="b"}
+if(window.matchMedia){const mq=window.matchMedia("(min-width:900px)");const rr=()=>{if(S.screen==="route")render()};mq.addEventListener?mq.addEventListener("change",rr):mq.addListener&&mq.addListener(rr)}
 $("askBtn").onclick=()=>{if(S.screen!=="book")show("book")};
 render();
 </script>
