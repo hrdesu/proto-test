@@ -114,6 +114,9 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px soli
 .st{display:flex;flex-direction:column;gap:4px;min-width:0}
 .st .t{line-height:1.5;padding-top:1px}
 .done .st .t{color:var(--sub)}
+.rowbtn{all:unset;display:block;width:100%;cursor:pointer;border-radius:4px}
+.rowbtn:hover .t,.rowbtn:focus-visible .t{text-decoration:underline}
+.rowbtn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .pill{display:inline-block;font-size:13px;font-weight:700;border-radius:999px;padding:0 8px;line-height:1.7;vertical-align:1px}
 .pill.now{background:var(--accent);color:var(--card)}
 .pill.done{background:var(--ok-soft);color:var(--ok)}
@@ -398,7 +401,7 @@ const V={
 home(){
   const has=S.worries.length>0;
   $("screen").innerHTML=`
-   <h1>気になっていることから、<br>一緒に始めましょう</h1>
+   <h1>相続について<br>気になっていることから、<br>一緒に始めましょう</h1>
    <p class="lead">「家族に迷惑をかけたくない」「何から手をつければいいか分からない」。そう感じるのは自然なことです。いま気になっていることを選ぶと、あなたに関係あることだけを、1つずつご案内します。</p>
    ${S.confirmReset?`<div class="inline-confirm" role="alert">これまでの答えとノートを消しますか？<button type="button" class="btn sm" id="rsY">消して始める</button><button type="button" class="btn sm" id="rsN">やめる</button></div>`:""}`;
   if($("rsY"))$("rsY").onclick=()=>{S=FRESH();try{localStorage.removeItem(KEY)}catch(e){};render()};
@@ -455,10 +458,10 @@ route(){
   const stops=ss.map((s,i)=>({no:i+1,s,st:S.done[s.id]?"done":i===cur?"now":""}));
   let body="";
   if(L==="v"){
-    body=`<ol class="road" aria-label="やることの一覧">${stops.map(o=>`<li class="${o.st}"${o.st==="now"?' aria-current="step"':""}><span class="dot" aria-hidden="true">${o.st==="done"?"✓":o.no}</span><div class="st">${o.st==="now"?work(o.s):`<span class="t">${plain(o.s.t)} ${pill(o.st,o.s)}</span>${o.st==="done"?`<button type="button" class="tbtn" data-redo="${o.s.id}">書き直す</button>`:""}`}</div></li>`).join("")}</ol>`;
+    body=`<ol class="road" aria-label="やることの一覧">${stops.map(o=>`<li class="${o.st}"${o.st==="now"?' aria-current="step"':""}><span class="dot" aria-hidden="true">${o.st==="done"?"✓":o.no}</span><div class="st">${o.st==="now"?work(o.s):(o.st==="done"?`<button type="button" class="rowbtn" data-redo="${o.s.id}" aria-label="${esc(plain(o.s.t))}（済）。押すと書き直せます"><span class="t">${plain(o.s.t)} ${pill(o.st,o.s)}</span></button>`:`<span class="t">${plain(o.s.t)} ${pill(o.st,o.s)}</span>`)}</div></li>`).join("")}</ol>`;
   }else if(L==="a"){
     body=`<div class="hwrap"><button type="button" class="btn sm" id="hPrev" aria-label="前のカードへ">←</button>
-      <div class="hscroll" id="hs" tabindex="0" aria-label="やることのカード">${stops.map(o=>`<section class="hcard ${o.st}">${o.st==="now"?work(o.s):`<p class="count">${o.no}. ${pill(o.st,o.s)}</p><p class="t">${plain(o.s.t)}</p>${o.st==="done"?`<button type="button" class="tbtn" data-redo="${o.s.id}">書き直す</button>`:""}`}</section>`).join("")}</div>
+      <div class="hscroll" id="hs" tabindex="0" aria-label="やることのカード">${stops.map(o=>`<section class="hcard ${o.st}">${o.st==="now"?work(o.s):(o.st==="done"?`<button type="button" class="rowbtn" data-redo="${o.s.id}" aria-label="${esc(plain(o.s.t))}（済）。押すと書き直せます"><p class="count">${o.no}. ${pill(o.st,o.s)}</p><p class="t">${plain(o.s.t)}</p></button>`:`<p class="count">${o.no}. ${pill(o.st,o.s)}</p><p class="t">${plain(o.s.t)}</p>`)}</section>`).join("")}</div>
       <button type="button" class="btn sm" id="hNext" aria-label="次のカードへ">→</button></div>`;
   }else{
     body=`<ol class="overview" aria-label="やることの一覧">${stops.map(o=>`<li class="${o.st}">${o.no}. ${plain(o.s.t)}</li>`).join("")}</ol><section class="nowbox">${work(ss[cur])}</section>`;
