@@ -495,8 +495,10 @@ phase(){
    <p class="eyebrow">1. やることに答える　完了</p>
    <h1>やることが終わりました</h1>
    <section class="panel"><dl class="dl"><dt>ノートに残った</dt><dd>${PAGES.filter(([p])=>Object.values(S.notes).some(n=>n.page===p)).map(([,n])=>`「${n}」`).join("")||"まだありません"}のページ</dd><dt>家族と話すこと</dt><dd>${tl.length}つ　<button type="button" class="tbtn" id="seeTalk" style="min-height:auto;padding:0">見る</button></dd></dl></section>
-   <h2>次は、家族がそろう日を決めます</h2>
-   <p>4つの質問（どんな集まりか・いつ・誰と・話したいこと）に答えます。旅行や帰省など、家族が集まる日に、このノートを一緒に開くためです。</p></div>`;
+   <h2>次は、家族に話す番です</h2>
+   <p>あなたが気にかけていたことは、ノートに残りました。ただ、ノートがあることを家族が知らなければ、いざというときに役立ちません。${asks?`一人では決めきれなかったことも、${asks}つあります。家族と話せば、決まることもあります。`:"家族と話すことで、あなたの思いが伝わります。"}</p>
+   <p>そこで、家族がそろう日に、このノートを一緒に開きませんか。「ノートを書いたから、一緒に見てほしい」と伝えれば、切り出しにくい相続の話も始めやすくなります。</p>
+   <section class="panel"><h3 style="font-size:18px;margin:0">このあと決めること</h3><ol class="road">${[["どんな集まりにするか","旅行・帰省・食事会など"],["いつ、誰と集まるか","おおよそで大丈夫です"],["その日に話したいこと","5つまで。全部を一度に話さなくて大丈夫です"],["家族を誘う","LINEで送る文面を用意します。直してから送れます"]].map(([t,d],i)=>`<li><span class="dot" aria-hidden="true">${i+1}</span><div class="st"><b class="t">${t}</b><span class="small">${d}</span></div></li>`).join("")}</ol></section></div>`;
   const bs=[{id:"n",label:planDone()?"家族がそろう日の計画を見る":"家族がそろう日を決める",cls:"primary",on:()=>{if(planDone())show("plan");else{S.gi=0;show("gather")}}},{id:"o",label:"ノートを見る",cls:"",on:()=>show("note")}];
   if(!S.worries.includes("leave"))bs.splice(1,0,{id:"wl",label:"遺言のことも入力する<small>子どもに何を残すか</small>",cls:"",on:()=>addWorry("leave")});
   if(nw)bs.splice(1,0,{id:"w",label:`ほかの気になることも入力する<small>${wById(nw).short}</small>`,cls:"",on:()=>{S.worries=[nw,...S.worries.filter(x=>x!==nw)];S.flash="";S.lastDone=null;persist();show("route")}});
