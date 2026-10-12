@@ -4,492 +4,501 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Zen+Maru+Gothic:wght@500;700&display=swap">
 <style>
-/* Layout: one phone-width column, one task per screen, fixed bottom action bar. Route = accordion timeline where each step opens in place */
+/* Layout: one phone-width column; one question per screen; the route shows every step's title, the current step is worked in place; results are written into "わたしのエンディングノート" */
 :root{
-  --bg:#f6f4f7; --card:#ffffff; --fg:#2a2430; --sub:#625a69; --line:#ddd6e1;
-  --accent:#9c3f86; --accent-soft:#f6e6f1; --accent-ink:#6e2a5e; --ok:#2f7a5b; --ok-soft:#e4f2ea; --note:#fbf8e9; --note-line:#e6dcae;
+  --bg:#f6f4f7; --card:#ffffff; --fg:#2a2430; --sub:#5d5664; --line:#d9d1de;
+  --accent:#9c3f86; --accent-soft:#f6e6f1; --accent-ink:#6e2a5e; --ok:#2f7a5b; --ok-soft:#e4f2ea;
+  --paper:#fffdf4; --paper-line:#e8dfb8; --paper-rule:#efe7c8;
   --display:"Zen Maru Gothic","Hiragino Maru Gothic ProN","BIZ UDPGothic",sans-serif;
   --body:"BIZ UDPGothic","Hiragino Sans","Yu Gothic",Meiryo,sans-serif;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#18151b; --card:#231f27; --fg:#f1ecf3; --sub:#b8aebf; --line:#3d3542;
-  --accent:#e08ccc; --accent-soft:#3a2535; --accent-ink:#f4c6e8; --ok:#7fd0a8; --ok-soft:#1f3329; --note:#2b2818; --note-line:#4d4628; color-scheme:dark}}
+  --bg:#18151b; --card:#231f27; --fg:#f1ecf3; --sub:#bdb3c4; --line:#3d3542;
+  --accent:#e08ccc; --accent-soft:#3a2535; --accent-ink:#f4c6e8; --ok:#7fd0a8; --ok-soft:#1f3329;
+  --paper:#26231a; --paper-line:#4d4628; --paper-rule:#38331f; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#18151b; --card:#231f27; --fg:#f1ecf3; --sub:#b8aebf; --line:#3d3542;
-  --accent:#e08ccc; --accent-soft:#3a2535; --accent-ink:#f4c6e8; --ok:#7fd0a8; --ok-soft:#1f3329; --note:#2b2818; --note-line:#4d4628; color-scheme:dark}
+  --bg:#18151b; --card:#231f27; --fg:#f1ecf3; --sub:#bdb3c4; --line:#3d3542;
+  --accent:#e08ccc; --accent-soft:#3a2535; --accent-ink:#f4c6e8; --ok:#7fd0a8; --ok-soft:#1f3329;
+  --paper:#26231a; --paper-line:#4d4628; --paper-rule:#38331f; color-scheme:dark}
 *{box-sizing:border-box}
 html,body{height:100%}
-body{margin:0;-webkit-text-size-adjust:100%}
+body{margin:0;-webkit-text-size-adjust:100%;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:18px;line-height:1.75}
 [hidden]{display:none!important}
-img{max-width:100%}
-body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:18px;line-height:1.75}
-.app{max-width:440px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;padding-inline:16px}
+.app{max-width:460px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;padding-inline:16px}
 .top{position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:8px;padding-block:10px;z-index:2;border-bottom:1px solid var(--line)}
 .brand{font-family:var(--display);font-weight:700;font-size:16px;display:flex;gap:8px;align-items:center}
 .tag{font-family:var(--body);font-size:12px;font-weight:400;border:1px solid var(--line);border-radius:999px;padding:0 8px;color:var(--sub)}
 .ask{font:inherit;font-size:14px;font-weight:700;color:var(--accent-ink);background:var(--accent-soft);border:0;border-radius:12px;padding:6px 12px;min-height:44px;cursor:pointer;line-height:1.3;text-align:center}
 .ask small{display:block;font-weight:400;font-size:11px}
-main{flex:1;padding-block:20px 150px;display:flex;flex-direction:column;gap:18px}
+.layout{flex:1;display:block}
+main{padding-block:20px 48px;display:flex;flex-direction:column;gap:18px;min-width:0}
+aside{display:none}
+.actions{display:flex;flex-direction:column;gap:10px;margin-top:8px;padding-top:16px;border-top:1px solid var(--line)}
+.actions .row{display:flex;gap:10px}
+.actions .hint{text-align:left}
+@media (min-width:900px){
+ .app{max-width:1080px;padding-inline:32px}
+ .layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:40px;align-items:start}
+ aside:not(:empty){display:flex;flex-direction:column;gap:14px;position:sticky;top:96px;padding-block:20px}
+ .m-only{display:none!important}
+ main h1{font-size:30px}
+}
+.ov{position:fixed;inset:0;z-index:10;display:grid;place-items:center;background:var(--accent);padding:24px;cursor:pointer}
+.ov-card{text-align:center;color:#fff;max-width:520px}
+.ov-sub{font-size:18px;opacity:.9}
+.ov-main{font-family:var(--display);font-size:32px;line-height:1.4;font-weight:700;text-wrap:balance}
+.ov.show{-webkit-animation:ovfade 1.3s ease both;animation:ovfade 1.3s ease both}
+@-webkit-keyframes ovfade{0%{opacity:0}15%{opacity:1}75%{opacity:1}100%{opacity:0}}
+@keyframes ovfade{0%{opacity:0}15%{opacity:1}75%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion:no-preference){.ov.show .ov-card{animation:rise .6s cubic-bezier(.2,.7,.2,1) both}}
 h1{font-family:var(--display);font-size:26px;line-height:1.45;margin:0;text-wrap:balance}
-h2{font-family:var(--display);font-size:19px;margin:0}
+h2{font-family:var(--display);font-size:20px;margin:0;line-height:1.5}
 p{margin:0}
 .lead{color:var(--sub)}
 .small{font-size:15px;color:var(--sub)}
-.save{font-size:14px;color:var(--ok);display:flex;align-items:flex-start;gap:8px;line-height:1.6}
-.save::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;background:var(--ok);margin-top:7px}
+.qno{font-size:16px;color:var(--sub);font-weight:700}
+.prog{display:flex;gap:6px}
+.prog i{flex:1;height:8px;border-radius:4px;background:var(--line)}
+.prog i.on{background:var(--accent)}
 .choice{display:flex;flex-direction:column;gap:10px}
 .opt{font:inherit;text-align:left;width:100%;min-height:60px;padding:14px 16px;border:2px solid var(--line);border-radius:14px;background:var(--card);color:var(--fg);display:flex;gap:12px;align-items:center;cursor:pointer}
-.opt .box{flex:none;width:26px;height:26px;border:2px solid var(--line);border-radius:7px;display:grid;place-items:center;font-size:15px;color:transparent}
+.opt .box{flex:none;width:28px;height:28px;border:2px solid var(--line);border-radius:7px;display:grid;place-items:center;font-size:15px;color:transparent}
 .opt.round .box{border-radius:50%}
 .opt[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
 .opt[aria-pressed="true"] .box{border-color:var(--accent);background:var(--accent);color:var(--card)}
-button:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));z-index:3}
-.bar-in{max-width:408px;margin:0 auto;display:flex;gap:10px}
-.btn{font:inherit;font-weight:700;min-height:56px;border-radius:14px;padding:0 16px;cursor:pointer;border:2px solid var(--line);background:var(--card);color:var(--fg);line-height:1.3}
+button:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.unused-bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));z-index:3}
+.bar-in{max-width:428px;margin:0 auto;display:flex;gap:10px}
+.btn{font:inherit;font-weight:700;min-height:58px;border-radius:14px;padding:0 16px;cursor:pointer;border:2px solid var(--line);background:var(--card);color:var(--fg);line-height:1.3}
 .btn small{display:block;font-size:12px;font-weight:400}
 .btn.primary{flex:1;background:var(--accent);border-color:var(--accent);color:var(--card)}
-.btn.back{flex:none;max-width:42%}
+.back-btn{background:transparent}
+.btn.wide{width:100%}
 .btn.sm{min-height:48px;font-size:16px}
-.btn[aria-disabled="true"]{opacity:.45}
 .hint{font-size:13px;color:var(--sub);text-align:center;margin-top:4px}
 .err{font-size:15px;color:var(--accent-ink);background:var(--accent-soft);border-radius:10px;padding:8px 12px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px}
-.quote{border-left:4px solid var(--accent);border-radius:0 12px 12px 0}
-.count{font-family:var(--display);font-size:44px;line-height:1;color:var(--accent)}
-.prog{display:flex;gap:6px}
-.prog i{flex:1;height:6px;border-radius:3px;background:var(--line)}
-.prog i.on{background:var(--accent)}
-.qno{font-size:15px;color:var(--sub)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
 .dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0}
 .dl dt{color:var(--sub);font-size:15px}
 .dl dd{margin:0;min-width:0}
 .link{font:inherit;background:none;border:0;color:var(--accent-ink);text-decoration:underline;padding:6px 0;cursor:pointer;text-align:left;min-height:44px}
-.answers{display:flex;flex-direction:column;gap:6px}
-.ans{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:15px}
-.ans span{min-width:0}
-.ans b{display:block;font-size:13px;color:var(--sub);font-weight:400}
-.ans button{flex:none;font:inherit;font-size:14px;border:1px solid var(--line);background:var(--bg);color:var(--accent-ink);border-radius:999px;padding:4px 12px;min-height:36px;cursor:pointer}
-.kw{font-weight:700;text-decoration:underline;text-decoration-color:var(--note-line);text-decoration-thickness:3px;text-underline-offset:3px}
-.term{font:inherit;background:none;border:0;padding:0;color:var(--accent-ink);text-decoration:underline dotted;text-underline-offset:4px;cursor:pointer}
-.term::after{content:"？";font-size:.75em;margin-left:1px}
+.kw{font-weight:700;text-decoration:underline;text-decoration-color:var(--paper-line);text-decoration-thickness:3px;text-underline-offset:3px}
+.gloss{background:var(--paper);border:1px solid var(--paper-line);border-radius:10px;padding:8px 12px;font-size:15px}
 .gloss b{display:block;font-size:14px;color:var(--sub)}
-.gloss{display:block;background:var(--note);border:1px solid var(--note-line);border-radius:10px;padding:8px 12px;margin:6px 0;font-size:15px;color:var(--fg)}
+/* route */
 .road{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
-.road>li{scroll-margin-top:84px;display:grid;grid-template-columns:34px minmax(0,1fr);column-gap:12px;position:relative;padding-bottom:14px}
+.road>li{display:grid;grid-template-columns:34px minmax(0,1fr);column-gap:12px;position:relative;padding-bottom:16px}
 .road>li::before{content:"";position:absolute;left:16px;top:34px;bottom:0;width:3px;background:var(--line)}
 .road>li:last-child::before{display:none}
 .road>li.done::before{background:var(--ok)}
 .dot{width:34px;height:34px;border-radius:50%;border:3px solid var(--line);background:var(--card);display:grid;place-items:center;font-size:15px;font-weight:700;color:var(--sub);z-index:1}
 .done .dot{border-color:var(--ok);background:var(--ok);color:var(--card)}
 .now .dot{border-color:var(--accent);background:var(--accent);color:var(--card);box-shadow:0 0 0 5px var(--accent-soft)}
-.acc{font:inherit;width:100%;text-align:left;background:none;border:0;color:var(--fg);padding:2px 0;cursor:pointer;display:flex;justify-content:space-between;gap:8px;align-items:flex-start;min-height:44px}
-.acc b{display:block}
-.acc .chev{flex:none;color:var(--accent-ink);font-size:13px;margin-top:2px;border:1px solid var(--line);border-radius:999px;padding:4px 10px;background:var(--card);white-space:nowrap}
-.now .acc b{color:var(--accent-ink)}
-.panel.later{background:var(--bg);border-style:dashed}
-.acc{cursor:default}
-.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:6px;display:flex;flex-direction:column;gap:12px}
-.now .panel{border:2px solid var(--accent)}
-textarea{font:inherit;font-size:17px;width:100%;min-height:96px;border:2px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--bg);color:var(--fg);resize:vertical}
-.saved{font-size:13px;color:var(--ok)}
-.flash{background:var(--ok-soft);color:var(--ok);border-radius:12px;padding:10px 12px;font-size:15px;font-weight:700}
-.memo{background:var(--note);border:1px solid var(--note-line);border-radius:10px;padding:8px 12px;font-size:15px;white-space:pre-wrap;word-break:break-word}
+.st b{display:block;line-height:1.5}
+.st .small{display:block}
+.now .st>b{color:var(--accent-ink)}
+.work{background:var(--card);border:2px solid var(--accent);border-radius:16px;padding:16px;margin-top:10px;display:flex;flex-direction:column;gap:14px}
+.goes{display:inline-flex;align-items:center;gap:6px;font-size:14px;background:var(--paper);border:1px solid var(--paper-line);border-radius:999px;padding:2px 12px;color:var(--fg);align-self:flex-start}
+.done .goes{opacity:.8}
+/* writing */
+.field{display:flex;flex-direction:column;gap:8px}
+.field label{font-weight:700}
+textarea{font:inherit;font-size:18px;width:100%;min-height:120px;border:3px solid var(--accent);border-radius:12px;padding:12px;background:var(--paper);color:var(--fg);resize:vertical;line-height:1.8;background-image:linear-gradient(transparent calc(1.8em - 1px),var(--paper-rule) 1px);background-size:100% 1.8em;background-position:0 12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:inherit;font-size:16px;border:2px solid var(--line);background:var(--card);color:var(--fg);border-radius:999px;padding:6px 14px;min-height:44px;cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.result{background:var(--paper);border:2px solid var(--paper-line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.big{font-family:var(--display);font-size:22px;line-height:1.4}
+.flash{background:var(--ok-soft);color:var(--ok);border-radius:12px;padding:12px 14px;font-size:16px;font-weight:700;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center}
+.undo{font:inherit;font-size:14px;font-weight:400;background:none;border:0;color:var(--ok);text-decoration:underline;padding:0;min-height:36px;cursor:pointer}
+/* note */
+.notecard{background:var(--paper);border:1px solid var(--paper-line);border-radius:6px 16px 16px 6px;border-left:10px solid var(--accent);padding:14px 16px;display:flex;justify-content:space-between;gap:12px;align-items:center}
+.notecard .pages{font-family:var(--display);font-size:22px}
+.page{background:var(--paper);border:1px solid var(--paper-line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.page h2{font-size:18px;border-bottom:2px solid var(--paper-line);padding-bottom:4px}
+.page.empty{opacity:.7}
+.entry{white-space:pre-wrap;word-break:break-word}
+.entry b{display:block;font-size:14px;color:var(--sub);font-weight:400}
+.agenda{margin:0;padding-left:1.3em}
+.agenda li{margin:4px 0}
 .consent{display:flex;gap:12px;align-items:flex-start;font-size:16px}
 .consent input{width:26px;height:26px;margin-top:2px;accent-color:var(--accent);flex:none}
 .note{font-size:13px;color:var(--sub);border-top:1px dashed var(--line);padding-top:12px}
-.foot{font-size:13px;text-align:center}
 .map{font-size:15px;line-height:1.7}
 .map ol{margin:0;padding-left:1.3em}
-.map li{margin:4px 0}
-.map .br{border-left:3px solid var(--line);padding-left:10px;margin:4px 0 4px 4px;color:var(--sub)}
-.flowwrap{display:flex;flex-direction:column;gap:14px}
-.sec{display:flex;flex-direction:column;gap:16px;padding-top:6px}
-.sec,.flowwrap>.ans{scroll-margin-top:84px}
-.sec+.sec{border-top:1px dashed var(--line);padding-top:24px}
-.nextbtn{width:100%}
-.btn.stepper{flex:1;background:var(--bg);border-color:var(--line);color:var(--sub);font-weight:400;font-size:14px}
-.steps{display:flex;gap:6px;justify-content:center;margin-bottom:4px}
-.steps i{width:28px;height:6px;border-radius:3px;background:var(--line)}
-.steps i.on{background:var(--accent)}
-.steps i.cur{background:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
-.kind{flex:none;font-size:12px;border-radius:999px;padding:2px 10px;white-space:nowrap;margin-top:2px}
-.k-read,.k-write{background:var(--ok-soft);color:var(--ok)}
-.k-calc{background:var(--note);color:var(--fg);border:1px solid var(--note-line)}
-.undo{font:inherit;font-size:14px;font-weight:400;background:none;border:0;color:var(--ok);text-decoration:underline;padding:0 0 0 6px;min-height:32px;cursor:pointer}
-.k-human{background:var(--accent-soft);color:var(--accent-ink)}
-.result{background:var(--bg);border:2px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
-.result.safe{border-color:var(--ok)}
-.result.maybe,.result.likely{border-color:var(--accent)}
-.big{font-family:var(--display);font-size:22px;line-height:1.4}
-.plainlist{margin:6px 0 10px;padding-left:1.3em;font-size:16px}
-.plainlist li{margin:4px 0}
-.plainlist li.isdone{color:var(--sub)}
-.other{display:flex;flex-direction:column;gap:4px}
 .inline-confirm{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--accent-soft);border-radius:12px;padding:10px 12px;font-size:15px}
-main{-webkit-animation:fade .35s ease-out both;animation:fade .35s ease-out both}
-.enter{-webkit-animation:fade .7s ease-out both;animation:fade .7s ease-out both}
+main{-webkit-animation:fade .45s ease-out both;animation:fade .45s ease-out both}
 .flash{-webkit-animation:fade .5s ease-out both;animation:fade .5s ease-out both}
-.opt{transition:background-color .2s,border-color .2s}
 @-webkit-keyframes fade{from{opacity:0}to{opacity:1}}
 @keyframes fade{from{opacity:0}to{opacity:1}}
-@-webkit-keyframes rise{from{opacity:0;-webkit-transform:translateY(24px)}to{opacity:1;-webkit-transform:none}}
-@keyframes rise{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:no-preference){
-.enter{-webkit-animation:rise .7s cubic-bezier(.2,.7,.2,1) both;animation:rise .7s cubic-bezier(.2,.7,.2,1) both}}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:no-preference){main{animation:rise .45s cubic-bezier(.2,.7,.2,1) both}}
 </style>
 
 <div class="app">
   <header class="top">
     <div class="brand">相続準備ガイド <span class="tag">試作品</span></div>
-    <button class="ask" id="askBtn" type="button">担当者に相談<small>電話・お店・LINE</small></button>
+    <button class="ask" id="askBtn" type="button">銀行に相談<small>無料・電話/お店/LINE</small></button>
   </header>
-  <main id="screen" aria-live="polite"></main>
+  <div class="layout"><main id="screen"></main><aside id="aside" aria-label="いまの状況"></aside></div>
 </div>
-<div class="bar" id="bar"><div class="bar-in" id="barIn"></div><p class="hint" id="barHint"></p></div>
+<div class="ov" id="ov" hidden role="status" aria-live="assertive"><div class="ov-card"><p class="ov-sub" id="ovSub"></p><p class="ov-main" id="ovMain"></p></div></div>
 
 <script>
 const GLOSS={
  "支店名":"通帳の表紙や1ページ目に書いてある「◯◯支店」のことです。",
- "保険証券":"保険に入ったときに届く、契約内容が書かれた書類です。",
  "権利証":"家や土地の持ち主であることを示す書類です。「登記識別情報」と書かれた紙の場合もあります。",
  "法定相続人":"法律で決まっている、財産を受け継ぐ人です。夫・妻と、子ども（子どもがいなければ親や兄弟）がなります。",
  "基礎控除":"相続税がかからない金額の上限です。3,000万円＋600万円×法定相続人の数で計算します。",
  "相続税":"亡くなった人の財産を受け取ったときにかかる税金です。財産が基礎控除より少なければかかりません。",
- "納税資金":"相続税を払うためのお金です。原則として10か月以内に現金で払います。",
- "暦年贈与":"1年間（1月〜12月）に110万円までの贈与なら、贈与税がかからない仕組みです。亡くなる前7年以内の贈与は相続財産に足し戻されます。",
- "非課税枠":"生命保険の受け取りは、500万円×法定相続人の数まで相続税がかかりません。",
- "二次相続":"夫・妻のどちらかが亡くなった後、残った人が亡くなったときの相続です。1回目の分け方で税金が変わることがあります。",
- "遺言":"自分が亡くなった後、財産を誰にどう分けるかを書き残すものです。決まった書き方があります。",
- "寄与分":"介護などで特に支えてくれた家族が、相続で多めに受け取れる場合がある仕組みです。",
+ "暦年贈与":"1年間（1月〜12月）に110万円までの贈与なら、贈与税がかからない仕組みです。",
+ "二次相続":"夫・妻のどちらかが亡くなった後、残った人が亡くなったときの相続です。",
  "成年後見":"判断が難しくなった人のお金や契約を、家庭裁判所が選んだ人が代わりに管理する仕組みです。",
  "家族信託":"元気なうちに、信頼できる家族にお金や家の管理を任せる契約です。"
 };
+/* ending-note pages: the container every step's result is written into */
+const PAGES=[["family","家族のこと"],["money","お金のこと"],["tax","相続税のこと"],["land","家や土地のこと"],["leave","残したいもの"],["care","医療・介護のこと"],["words","家族へのことば"],["things","身の回りのこと"]];
 const WORRIES=[
- {id:"where",label:"通帳や保険がどこにあるか、家族が知らない",short:"お金の置き場所を家族が知らない"},
- {id:"tax",label:"相続税がかかるか分からない",short:"相続税がかかるか分からない"},
- {id:"leave",label:"子どもに何を残せばいいか分からない",short:"何を残すか決められない"},
- {id:"dementia",label:"認知症になったら、お金はどうなるか心配",short:"判断が難しくなった後が心配"},
- {id:"talk",label:"家族で話したことがない",short:"家族とまだ話せていない"},
- {id:"tidy",label:"家や物の片付けが手つかず",short:"片付けが手つかず"},
- {id:"land",label:"家や土地をどうするか決めていない",short:"家や土地をどうするか決めていない"}
+ {id:"where",label:"通帳や保険がどこにあるか、家族が知らない",short:"お金の置き場所を家族が知らない",agenda:"財産の一覧に、漏れがないかの確認"},
+ {id:"tax",label:"相続税がかかるか分からない",short:"相続税がかかるか分からない",agenda:"相続税の正確な試算と、今からできる対策"},
+ {id:"leave",label:"子どもに何を残せばいいか分からない",short:"何を残すか決められない",agenda:"遺言の作り方と、生きているうちに渡す方法"},
+ {id:"dementia",label:"認知症になったら、お金はどうなるか心配",short:"判断が難しくなった後が心配",agenda:"家族が代わりにお金を出せる仕組み（信託など）"},
+ {id:"talk",label:"家族で話したことがない",short:"家族とまだ話せていない",agenda:"家族に何を伝えておくとよいか"},
+ {id:"tidy",label:"家や物の片付けが手つかず",short:"片付けが手つかず",agenda:"片付けや、お墓のことの相談先"},
+ {id:"land",label:"家や土地をどうするか決めていない",short:"家や土地をどうするか決めていない",agenda:"家や土地の名義と、引き継ぎ方"}
 ];
-/* questions: rewording of the existing diagnosis + "対象の方" conditions */
 const Q={
- spouse:{q:"夫・妻はいらっしゃいますか？",short:"夫・妻",a:["いる","いない","わからない"],src:"既存診断 Q1"},
- kids:{q:"お子さんは何人いますか？",short:"お子さん",a:["0人","1人","2人","3人以上","わからない"],src:"既存診断 Q2"},
- sibs:{q:"ご兄弟は何人いますか？",short:"ご兄弟",a:["0人","1人","2人","3人以上","わからない"],src:"既存診断 Q2",if:A=>A.kids==="0人"},
- assets:{q:"預金や株などは、全部でどのくらいですか？",short:"預金や株",a:["1,000万円未満","1,000万〜3,000万円","3,000万〜1億円","1億円以上","わからない"],src:"既存診断 Q3"},
- land:{q:"家や土地をお持ちですか？",short:"家や土地",a:["持っている","持っていない","わからない"],src:"既存診断 Q6"},
- banks:{q:"お取引のある銀行は、いくつありますか？",short:"銀行の数",a:["1つ","2〜3つ","4つ以上","わからない"],src:"既存診断 Q5"},
- debt:{q:"ローンや、借りているお金はありますか？",short:"借りているお金",a:["ある","ない","わからない"],src:"タスク0004の対象"},
- others:{q:"家族以外に、財産を渡したい人はいますか？",short:"家族以外に渡したい人",a:["いる","いない","わからない"],src:"タスク0025の対象"},
- will:{q:"遺言書を作ったことはありますか？",short:"遺言書",a:["ある","ない","わからない"],src:"タスク0031の対象"},
- care:{q:"いま、介護を受けていますか？",short:"介護",a:["受けている","受けていない"],src:"タスク0023の対象"},
- helper:{q:"お金のことを頼める家族はいますか？",short:"頼める家族",a:["いる","いない","わからない"],src:"タスク0028の対象"},
- note:{q:"エンディングノートは書いていますか？",short:"エンディングノート",a:["書いている","書いていない"],src:"タスク0032の対象"},
- grave:{q:"お墓のことで、決めていないことはありますか？",short:"お墓",a:["ある","ない","わからない"],src:"タスク0040・0041の対象"},
- pet:{q:"ペットを飼っていますか？",short:"ペット",a:["飼っている","飼っていない"],src:"タスク0044の対象"},
- landtype:{q:"お持ちのものを、すべて選んでください",short:"持っている家や土地",a:["自宅","二世帯住宅","空き家・別荘","貸している土地や建物","山林・農地","親の名義のままの土地","わからない"],multi:true,src:"既存診断 Q6"}
+ spouse:{q:"夫・妻はいらっしゃいますか？",short:"夫・妻",a:["いる","いない","わからない"]},
+ kids:{q:"お子さんは何人いますか？",short:"お子さん",a:["0人","1人","2人","3人以上","わからない"]},
+ sibs:{q:"ご兄弟は何人いますか？",short:"ご兄弟",a:["0人","1人","2人","3人以上","わからない"],if:A=>A.kids==="0人"},
+ assets:{q:"預金や株などは、全部でどのくらいですか？",short:"預金や株",a:["1,000万円未満","1,000万〜3,000万円","3,000万〜1億円","1億円以上","わからない"]},
+ land:{q:"家や土地をお持ちですか？",short:"家や土地",a:["持っている","持っていない","わからない"]},
+ debt:{q:"ローンや、借りているお金はありますか？",short:"借りているお金",a:["ある","ない","わからない"]},
+ others:{q:"家族以外に、財産を渡したい人はいますか？",short:"家族以外に渡したい人",a:["いる","いない","わからない"]},
+ will:{q:"遺言書を作ったことはありますか？",short:"遺言書",a:["ある","ない","わからない"]},
+ care:{q:"いま、介護を受けていますか？",short:"介護",a:["受けている","受けていない"]},
+ pet:{q:"ペットを飼っていますか？",short:"ペット",a:["飼っている","飼っていない"]},
+ grave:{q:"お墓のことで、決めていないことはありますか？",short:"お墓",a:["ある","ない","わからない"]},
+ landtype:{q:"お持ちのものを、すべて選んでください",short:"持っている家や土地",a:["自宅","空き家・別荘","貸している土地や建物","山林・農地","親の名義のままの土地","わからない"],multi:true}
 };
-const QOF={where:["banks","land","debt"],tax:["spouse","kids","sibs","assets","land"],leave:["spouse","kids","sibs","others","will"],dementia:["care","helper"],talk:["kids","note"],tidy:["grave","pet"],land:["landtype"]};
-/* steps: k = web | tool | human ; pd = existing task id */
-const T=(o)=>o;
+const QOF={where:["land","debt"],tax:["spouse","kids","sibs","assets","land"],leave:["spouse","kids","sibs","others","will"],dementia:["care"],talk:["kids"],tidy:["pet","grave"],land:["landtype"]};
+/* step kinds: write (書いてノートに残す) / decide (読んで、決めたことを残す) / calc (その場で分かり、ノートに残る) / human (人に相談する) */
 const ROUTES={
  where:[
-  T({pd:"0001",t:"通帳を1冊ずつ、財産メモに書く",k:"tool",bring:"通帳",time:"10分",done:"銀行名と[[支店名]]、置き場所を1つ書けたら終わりです。",memo:"例：◯◯銀行 △△支店（タンスの上の引き出し）"}),
-  T({pd:"0002",t:"株や投資信託の口座を、財産メモに書く",k:"tool",bring:"証券会社からの書類",time:"10分",done:"会社名と置き場所を書けたら終わりです。持っていなければ「できた」で進めます。",memo:"例：□□証券（書類は本棚の青いファイル）"}),
-  T({pd:"0004",t:"借りているお金を書き出す",k:"web",bring:"ローンの書類",time:"10分",done:"借りている先と、残りのおおよその額を書けたら終わりです。",memo:"例：住宅ローン △△銀行 残り300万円くらい",if:A=>A.debt!=="ない"}),
-  T({pd:"0003",t:"家や土地の[[権利証]]の置き場所を書く",k:"tool",bring:"[[権利証]]、固定資産税の通知",time:"10分",done:"置き場所を書けたら終わりです。",memo:"例：権利証は金庫の中",if:A=>A.land==="持っている"}),
-  T({pd:"0043",t:"スマホやパソコンで使っているサービスを書き出す",k:"web",bring:"スマホ",time:"10分",done:"ネット銀行やよく使うサービスを1つ書けたら終わりです。",memo:"例：ネット銀行、写真の保存サービス"}),
-  T({pd:"0007",t:"財産メモに漏れがないか、人に相談して確かめる",k:"human",pro:["税理士"],bring:"これまでの財産メモ",time:"30分",done:"相談の予約ができたら終わりです。相談は無料です。"})],
+  {id:"0001",t:"よく使う通帳の、銀行名と置き場所を書く",k:"write",page:"money",bring:"通帳",time:"5分",chips:["タンスの引き出し","金庫","仏壇の下","寝室の棚"],ph:"例：◯◯銀行 △△支店。タンスの上の引き出し"},
+  {id:"0002",t:"株や投資信託の、会社名と書類の置き場所を書く",k:"write",page:"money",bring:"証券会社からの書類",time:"5分",chips:["持っていない","本棚のファイル","金庫"],ph:"例：□□証券。書類は本棚の青いファイル"},
+  {id:"0004",t:"借りているお金を書く",k:"write",page:"money",bring:"ローンの書類",time:"5分",chips:["住宅ローン","車のローン","カードの分割払い"],ph:"例：住宅ローン △△銀行 残り300万円くらい",if:A=>A.debt!=="ない"},
+  {id:"0003",t:"家や土地の[[権利証]]の置き場所を書く",k:"write",page:"land",bring:"[[権利証]]",time:"5分",chips:["金庫","仏壇の引き出し","銀行の貸金庫","わからない"],ph:"例：権利証は金庫の中",if:A=>A.land==="持っている"},
+  {id:"0007",t:"銀行の相談員に、漏れがないか見てもらう",k:"human",time:"30分",pro:["税理士"]}],
  tax:[
-  T({pd:"0005",t:"誰が[[法定相続人]]になるかを確かめる",k:"tool",tool:"heirs",time:"1分",done:"人数が表示されたら終わりです。"}),
-  T({pd:"0006",t:"[[相続税]]がかかるかの目安を見る",k:"tool",tool:"tax",time:"1分",done:"目安が表示されたら終わりです。"}),
-  T({pd:"安心",t:"今は大きな対策は必要なさそうです",k:"web",time:"3分",done:"読み終えたら終わりです。目安を家族に伝えておくと安心です。次は、お金の置き場所の整理がおすすめです。",if:A=>taxResult(A).level==="safe"}),
-  T({pd:"0021",t:"[[納税資金]]があるかを確かめる",k:"web",bring:"通帳",time:"10分",done:"預金で払えそうか、目安と見比べたら終わりです。",if:A=>taxResult(A).level!=="safe"}),
-  T({pd:"0034",t:"生きているうちに少しずつ渡す方法（[[暦年贈与]]）を知る",k:"web",time:"10分",done:"読み終えたら終わりです。",if:A=>taxResult(A).level!=="safe"}),
-  T({pd:"0037",t:"生命保険の[[非課税枠]]を知る",k:"web",time:"5分",done:"読み終えたら終わりです。",if:A=>taxResult(A).level!=="safe"}),
-  T({pd:"0009",t:"人に相談して、正確な試算をする",k:"human",bring:"これまでの目安とメモ",time:"30分",done:"相談の予約ができたら終わりです。暦年贈与の信託なども、ここでご案内します。",if:A=>taxResult(A).level!=="safe"})],
+  {id:"0005",t:"[[法定相続人]]が誰になるかを確かめる",k:"calc",tool:"heirs",page:"family",time:"1分"},
+  {id:"0006",t:"[[相続税]]がかかるかの目安を見る",k:"calc",tool:"tax",page:"tax",time:"1分"},
+  {id:"0021",t:"相続税を預金で払えそうか考える",k:"decide",page:"tax",time:"3分",about:"相続税は、原則として10か月以内に現金で払います。家や土地が多く預金が少ないと、払うお金が足りなくなることがあります。",ask:"預金で払えそうですか？",opts:["払えそう","足りないかもしれない","わからない"],if:A=>taxResult(A).level!=="safe"},
+  {id:"0034",t:"生きているうちに少しずつ渡すか考える",k:"decide",page:"leave",time:"3分",about:"1年に110万円までなら、贈与税がかからずに渡せます（[[暦年贈与]]）。亡くなる前7年以内の分は相続財産に戻されます。",ask:"生きているうちに渡したいですか？",opts:["渡したい","今は考えていない","わからない"],if:A=>taxResult(A).level!=="safe"},
+  {id:"0009",t:"銀行の相談員と、正確な試算をする",k:"human",time:"30分",pro:["税理士"],if:A=>taxResult(A).level!=="safe"}],
  leave:[
-  T({pd:"0005",t:"誰が[[法定相続人]]になるかを確かめる",k:"tool",tool:"heirs",time:"1分",done:"人数が表示されたら終わりです。"}),
-  T({pd:"0025",t:"家族以外に渡したい人と、渡したいものを書く",k:"web",time:"5分",done:"1人と1つ書けたら終わりです。",memo:"例：お世話になった姪に、着物を",if:A=>A.others==="いる"}),
-  T({pd:"0022",t:"夫・妻が亡くなった後の相続（[[二次相続]]）を知る",k:"web",time:"10分",done:"読み終えたら終わりです。",if:A=>A.spouse==="いる"}),
-  T({pd:"0034",t:"生きているうちに少しずつ渡す方法（[[暦年贈与]]）を知る",k:"web",time:"10分",done:"読み終えたら終わりです。"}),
-  T({pd:"0031",t:"[[遺言]]の作り方を、人に相談する",k:"human",bring:"これまでのメモ",time:"30分",done:"相談の予約ができたら終わりです。遺言の作成と保管もご相談いただけます。",if:A=>A.will!=="ある"})],
+  {id:"0005",t:"[[法定相続人]]が誰になるかを確かめる",k:"calc",tool:"heirs",page:"family",time:"1分"},
+  {id:"0025",t:"家族以外に渡したい人と、渡したいものを書く",k:"write",page:"leave",time:"5分",chips:["姪","甥","お世話になった人"],ph:"例：お世話になった姪に、着物を",if:A=>A.others==="いる"},
+  {id:"0024w",t:"残したいものを1つ書く",k:"write",page:"leave",time:"5分",chips:["家","預金","着物","アルバム"],ph:"例：父のアルバムを長男に"},
+  {id:"0022",t:"夫・妻にどれくらい残すか考える",k:"decide",page:"leave",time:"3分",about:"夫・妻のどちらかが亡くなった後、残った人が亡くなったときにも相続があります（[[二次相続]]）。1回目の分け方で、2回目の税金が変わることがあります。",ask:"夫・妻に多めに残したいですか？",opts:["多めに残したい","子どもと同じくらい","わからない"],if:A=>A.spouse==="いる"},
+  {id:"0031",t:"銀行の相談員に、遺言の作り方を聞く",k:"human",time:"30分",pro:["弁護士","司法書士"],if:A=>A.will!=="ある"}],
  dementia:[
-  T({pd:"0042",t:"医療や介護の希望を、1つ書く",k:"web",time:"5分",done:"1つ書けたら終わりです。",memo:"例：できるだけ家で過ごしたい"}),
-  T({pd:"0023",t:"介護をしてくれる家族への配慮（[[寄与分]]）を知る",k:"web",time:"5分",done:"読み終えたら終わりです。",if:A=>A.care==="受けている"}),
-  T({pd:"0028",t:"[[成年後見]]と[[家族信託]]の違いを知る",k:"web",time:"10分",done:"読み終えたら終わりです。"}),
-  T({pd:"0007",t:"家族が代わりにお金を出せる仕組みを、人に相談する",k:"human",pro:["司法書士","弁護士"],bring:"これまでのメモ",time:"30分",done:"相談の予約ができたら終わりです。"})],
+  {id:"0042",t:"医療や介護の希望を1つ書く",k:"write",page:"care",time:"5分",chips:["できるだけ家で過ごしたい","延命治療は望まない","家族に任せる"],ph:"例：できるだけ家で過ごしたい"},
+  {id:"0028",t:"お金のことを任せたい人を決める",k:"decide",page:"money",time:"3分",about:"判断が難しくなると、銀行の手続きが本人でないとできなくなります。家庭裁判所が人を選ぶ[[成年後見]]と、元気なうちに家族に任せておく[[家族信託]]があります。",ask:"お金のことを任せたい人はいますか？",opts:["決まっている","まだ決めていない","いない"]},
+  {id:"0023",t:"介護をしてくれる家族のことを考える",k:"decide",page:"leave",time:"3分",about:"介護などで特に支えてくれた家族は、相続で多めに受け取れる場合があります。ただ、家族の間で意見が分かれやすいところです。",ask:"介護してくれている家族に、多めに残したいですか？",opts:["多めに残したい","みんな同じでよい","わからない"],if:A=>A.care==="受けている"},
+  {id:"0007",t:"銀行の相談員に、家族がお金を出せる仕組みを聞く",k:"human",time:"30分",pro:["司法書士","弁護士"]}],
  talk:[
-  T({pd:"0005",t:"誰と話しておくべきか（[[法定相続人]]）を確かめる",k:"tool",tool:"heirs",time:"1分",done:"顔ぶれが表示されたら終わりです。"}),
-  T({pd:"0032",t:"子どもに伝えたいことを、1つだけ書く",k:"web",time:"5分",done:"1行書けたら終わりです。エンディングノートの最初の1行になります。",memo:"例：家のことは長男に相談してほしい"}),
-  T({pd:"0042",t:"医療や介護の希望を、1つ書く",k:"web",time:"5分",done:"1つ書けたら終わりです。",memo:"例：できるだけ家で過ごしたい"}),
-  T({pd:"0033",t:"相続人どうしの連絡先をそろえる",k:"web",time:"10分",done:"全員の電話番号が分かったら終わりです。",memo:"例：長男 090-…、長女 080-…",if:A=>heirs(A).n>=2}),
-  T({pd:"0007",t:"話す内容を、人に相談して整理する",k:"human",pro:["弁護士"],bring:"これまでのメモ",time:"30分",done:"相談の予約ができたら終わりです。"})],
+  {id:"0005",t:"誰と話しておけばよいか（[[法定相続人]]）を確かめる",k:"calc",tool:"heirs",page:"family",time:"1分"},
+  {id:"0032",t:"子どもに伝えたいことを1つ書く",k:"write",page:"words",time:"5分",chips:["家のこと","お金のこと","お墓のこと","ありがとう"],ph:"例：家のことは長男に相談してほしい"},
+  {id:"0042",t:"医療や介護の希望を1つ書く",k:"write",page:"care",time:"5分",chips:["できるだけ家で過ごしたい","延命治療は望まない","家族に任せる"],ph:"例：できるだけ家で過ごしたい"},
+  {id:"0007",t:"銀行の相談員に、家族に何を伝えておくとよいか聞く",k:"human",time:"30分",pro:["弁護士"]}],
  tidy:[
-  T({pd:"0045",t:"片付ける場所を、1か所だけ決める",k:"web",time:"3分",done:"場所を決めたら終わりです。",memo:"例：押し入れの上の段"}),
-  T({pd:"0043",t:"スマホやパソコンで使っているサービスを書き出す",k:"web",bring:"スマホ",time:"10分",done:"1つ書けたら終わりです。",memo:"例：写真の保存サービス"}),
-  T({pd:"0044",t:"ペットを預ける先を考える",k:"web",time:"5分",done:"預けたい人を1人書けたら終わりです。",memo:"例：犬は長女に",if:A=>A.pet==="飼っている"}),
-  T({pd:"0040",t:"お墓について決めていないことを書く",k:"web",time:"5分",done:"1つ書けたら終わりです。",memo:"例：墓じまいするか",if:A=>A.grave!=="ない"}),
-  T({pd:"相談",t:"必要なら、片付けの専門の人に相談する",k:"human",time:"10分",done:"相談するか決めたら終わりです。"})],
+  {id:"0045",t:"片付ける場所を1か所だけ決めて書く",k:"write",page:"things",time:"3分",chips:["押し入れ","物置","台所の棚","本棚"],ph:"例：押し入れの上の段"},
+  {id:"0043",t:"スマホで使っているサービスを書く",k:"write",page:"things",bring:"スマホ",time:"5分",chips:["ネット銀行","写真の保存","ネット通販","特にない"],ph:"例：写真はスマホの中だけ"},
+  {id:"0044",t:"ペットを預けたい人を書く",k:"write",page:"things",time:"3分",chips:["長男","長女","近所の人"],ph:"例：犬は長女に",if:A=>A.pet==="飼っている"},
+  {id:"0040",t:"お墓について決めていないことを書く",k:"write",page:"things",time:"3分",chips:["墓じまいするか","お墓を買うか","誰が守るか"],ph:"例：墓じまいするか迷っている",if:A=>A.grave!=="ない"}],
  land:[
-  T({pd:"0003",t:"家や土地の[[権利証]]の置き場所を書く",k:"tool",bring:"[[権利証]]、固定資産税の通知",time:"10分",done:"置き場所を書けたら終わりです。",memo:"例：権利証は金庫の中"}),
-  T({pd:"0011",t:"二世帯住宅の相続で気をつけることを知る",k:"web",time:"10分",done:"読み終えたら終わりです。",if:A=>has(A.landtype,"二世帯住宅")}),
-  T({pd:"0016",t:"空き家・別荘をどうするか、選択肢を知る",k:"web",time:"10分",done:"読み終えたら終わりです。",if:A=>has(A.landtype,"空き家・別荘")}),
-  T({pd:"0013",t:"貸している土地や建物の整理の仕方を知る",k:"web",time:"10分",done:"読み終えたら終わりです。",if:A=>has(A.landtype,"貸している土地や建物")}),
-  T({pd:"0014",t:"山林や農地の引き継ぎ方を知る",k:"web",time:"10分",done:"読み終えたら終わりです。",if:A=>has(A.landtype,"山林・農地")}),
-  T({pd:"0015",t:"親の名義のままの土地を、名義変更する方法を知る",k:"web",time:"10分",done:"読み終えたら終わりです。",if:A=>has(A.landtype,"親の名義のままの土地")}),
-  T({pd:"0010",t:"家や土地のことを、人に相談する",k:"human",bring:"これまでのメモ",time:"30分",done:"相談の予約ができたら終わりです。"})]
+  {id:"0003",t:"家や土地の[[権利証]]の置き場所を書く",k:"write",page:"land",bring:"[[権利証]]",time:"5分",chips:["金庫","仏壇の引き出し","銀行の貸金庫","わからない"],ph:"例：権利証は金庫の中"},
+  {id:"0016",t:"空き家・別荘をどうしたいか考える",k:"decide",page:"land",time:"3分",about:"空き家は持っているだけで税金や管理の手間がかかります。売る、貸す、家族が住む、などの道があります。",ask:"どうしたいですか？",opts:["売りたい","家族に住んでほしい","まだ決めていない"],if:A=>has(A.landtype,"空き家・別荘")},
+  {id:"0013",t:"貸している土地や建物をどうしたいか考える",k:"decide",page:"land",time:"3分",about:"貸している土地や建物は、契約の内容を家族が知らないと、引き継ぐときに困ります。",ask:"契約書の置き場所を、家族は知っていますか？",opts:["知っている","知らない","わからない"],if:A=>has(A.landtype,"貸している土地や建物")},
+  {id:"0014",t:"山林や農地をどうしたいか考える",k:"decide",page:"land",time:"3分",about:"山林や農地は、売ったり貸したりしにくく、引き継ぐ人が困ることがあります。",ask:"引き継ぐ人は決まっていますか？",opts:["決まっている","まだ決めていない","引き継ぎたい人がいない"],if:A=>has(A.landtype,"山林・農地")},
+  {id:"0015",t:"親の名義のままの土地のことを考える",k:"decide",page:"land",time:"3分",about:"相続した土地の名義変更は、2024年から義務になりました。親の名義のままの土地は、早めの手続きが必要です。",ask:"名義を変える手続きをしたいですか？",opts:["したい","相談してから決めたい","わからない"],if:A=>has(A.landtype,"親の名義のままの土地")},
+  {id:"0010",t:"銀行の相談員に、家や土地の引き継ぎ方を聞く",k:"human",time:"30分",pro:["司法書士","税理士"]}]
 };
-const KIND={read:"読んで終わります",write:"書いて残します",calc:"その場で分かります",human:"人に相談します"};
-function kindOf(s){return s.k==="human"?"human":s.tool?"calc":s.memo?"write":"read"}
-const MAXSTEPS=6;
-const PRO={"0007":["税理士","司法書士"],"0009":["税理士"],"0031":["弁護士","司法書士"],"0010":["司法書士","税理士"],"相談":[]};
+const KIND={write:"書いてノートに残す",decide:"読んで、決めたことを残す",calc:"その場で分かる",human:"人に相談する"};
 const PROINFO={"弁護士":{role:"家族の間で意見が分かれそうなとき、遺言の内容を一緒に考えたいとき",fee:"相談は1時間1万円前後から（事務所により異なります）"},
 "税理士":{role:"相続税の正確な計算や、申告、贈与の進め方の相談",fee:"相続税の申告は、財産の0.7〜1%程度が目安です"},
 "司法書士":{role:"家や土地の名義変更、遺言書の作成の手伝い、成年後見の手続き",fee:"名義変更は1件数万円〜が目安です（手続きにより異なります）"}};
-function prosFor(s){return s.pro||PRO[s.pd]||(s.k==="human"?["司法書士"]:[])}
 function has(v,x){return Array.isArray(v)&&v.includes(x)}
 function num(v){return v==="0人"?0:v==="1人"?1:v==="2人"?2:v==="3人以上"?3:null}
 function heirs(A){
   const sp=A.spouse==="いる"?1:A.spouse==="いない"?0:null;const k=num(A.kids);
   if(k===null)return{n:null,who:"お子さんの人数が分かると表示できます"};
-  let rest=0,whoRest="";
+  let rest,whoRest;
   if(k>0){rest=k;whoRest=`お子さん${k}人${A.kids==="3人以上"?"以上":""}`}
-  else{const s=num(A.sibs);if(s===null)return{n:null,who:"ご兄弟の人数が分かると表示できます"};if(s>0){rest=s;whoRest=`ご兄弟${s}人`}else{rest=1;whoRest="ご両親など（くわしくは担当者に確認）"}}
-  const spv=sp===null?0:sp;
-  return{n:spv+rest,who:[sp?"夫・妻":"",whoRest].filter(Boolean).join("と"),spUnknown:sp===null,approx:A.kids==="3人以上"||(k===0&&A.sibs==="3人以上")};
+  else{const s=num(A.sibs);if(s===null)return{n:null,who:"ご兄弟の人数が分かると表示できます"};if(s>0){rest=s;whoRest=`ご兄弟${s}人`}else{rest=1;whoRest="ご両親など（くわしくは銀行の相談員に確認）"}}
+  return{n:(sp||0)+rest,who:[sp?"夫・妻":"",whoRest].filter(Boolean).join("と"),approx:A.kids==="3人以上"||A.sibs==="3人以上"};
 }
 const BANDS={"1,000万円未満":[0,1000],"1,000万〜3,000万円":[1000,3000],"3,000万〜1億円":[3000,10000],"1億円以上":[10000,Infinity]};
 function taxResult(A){
   const h=heirs(A);const b=BANDS[A.assets];
-  if(!h.n||!b)return{level:"unknown",title:"いまの答えでは目安を出せません",body:"「わからない」と答えた項目があります。担当者と一緒に確かめましょう。"};
-  const base=3000+600*h.n;const landYes=A.land==="持っている";
-  if(b[1]<=base&&!landYes)return{level:"safe",base,title:"かからなそうです",body:`預金や株の額が、基礎控除（${base.toLocaleString()}万円）より少ないためです。`};
-  if(b[1]<=base&&landYes)return{level:"maybe",base,title:"家の評価しだいで、かかるかもしれません",body:`預金や株は基礎控除（${base.toLocaleString()}万円）より少ないですが、家や土地を足すと超える場合があります。`};
-  if(b[0]>=base)return{level:"likely",base,title:"かかるかもしれません",body:`預金や株だけで、基礎控除（${base.toLocaleString()}万円）を超えています。`};
-  return{level:"maybe",base,title:"財産の額しだいで、かかるかもしれません",body:`預金や株の額が、基礎控除（${base.toLocaleString()}万円）前後です。`};
+  if(!h.n||!b)return{level:"unknown",title:"いまの答えでは目安を出せません",body:"「わからない」と答えた項目があります。銀行の相談員と一緒に確かめましょう。"};
+  const base=3000+600*h.n;const landYes=A.land==="持っている";const f=base.toLocaleString();
+  if(b[1]<=base&&!landYes)return{level:"safe",title:"かからなそうです",body:`預金や株の額が、基礎控除（${f}万円）より少ないためです。`};
+  if(b[1]<=base)return{level:"maybe",title:"家の評価しだいで、かかるかもしれません",body:`預金や株は基礎控除（${f}万円）より少ないですが、家や土地を足すと超える場合があります。`};
+  if(b[0]>=base)return{level:"likely",title:"かかるかもしれません",body:`預金や株だけで、基礎控除（${f}万円）を超えています。`};
+  return{level:"maybe",title:"財産の額しだいで、かかるかもしれません",body:`預金や株の額が、基礎控除（${f}万円）前後です。`};
 }
-const KEY="yorisoi-proto-v7";
-const FRESH=()=>({screen:"home",hist:[],worries:[],ans:{},revealed:0,done:{},memos:{},flash:"",anim:null,contact:null,consent:false,err:"",errAt:null,confirmReset:false});
+const KEY="yorisoi-proto-v9";
+const FRESH=()=>({screen:"home",hist:[],worries:[],ans:{},qi:0,done:{},notes:{},draft:{},pick:{},flash:"",lastDone:null,contact:null,consent:false,err:"",confirmReset:false});
 let S=FRESH();
 try{const raw=localStorage.getItem(KEY);if(raw){const d=JSON.parse(raw);if(d&&d.worries)S={...FRESH(),...d,screen:"home",hist:[],err:"",flash:""}}}catch(e){}
-function persist(){try{localStorage.setItem(KEY,JSON.stringify({worries:S.worries,ans:S.ans,revealed:S.revealed,done:S.done,memos:S.memos}))}catch(e){}}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify({worries:S.worries,ans:S.ans,qi:S.qi,done:S.done,notes:S.notes,draft:S.draft}))}catch(e){}}
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const RM=()=>!!(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-const NAMES={home:"はじめの画面",pro:"専門家を探す",flow:"質問",route:"あなたの道のり",book:"相談の予約",line:"LINEの案内",map:"画面マップ",self:"自分で調べる"};
-function go(name){S.hist.push(S.screen);S.screen=name;S.err="";S.confirmReset=false;persist();render();window.scrollTo(0,0)}
-function back(){const h=S.hist.pop();S.screen=h||"home";S.err="";persist();render();window.scrollTo(0,0)}
-function backLabel(){const h=S.hist[S.hist.length-1];return h?`← 戻る<small>${NAMES[h]||"前の画面"}へ</small>`:"← 戻る"}
+const NAMES={home:"はじめの画面",q:"前の質問",summary:"整理した内容",route:"あなたの道のり",note:"エンディングノート",book:"相談の予約",pro:"専門家を探す",send:"家族に渡す",map:"画面マップ",self:"自分で調べる"};
+function show(name,opt){S.hist.push({screen:S.screen,qi:S.qi});S.screen=name;if(opt&&opt.qi!=null)S.qi=opt.qi;S.err="";S.confirmReset=false;persist();render();window.scrollTo(0,0);const c=cueFor(name);if(c[0])cue(c[0],c[1])}
+function back(){const h=S.hist.pop();if(h){S.screen=h.screen;S.qi=h.qi}else S.screen="home";S.err="";persist();render();window.scrollTo(0,0);const c=cueFor(S.screen);if(c[0])cue(c[0],"前の画面に戻りました")}
+function backLabel(){const h=S.hist[S.hist.length-1];if(!h)return "← 戻る";const n=h.screen==="q"?(h.qi===0?"気になることを選ぶ画面":`質問${h.qi}`):(NAMES[h.screen]||"前の画面");return `← 戻る<small>${n}へ</small>`}
 function wById(id){return WORRIES.find(w=>w.id===id)}
-function plain(t){return t.replace(/\[\[(.+?)\]\]/g,"$1")}
-function rich(t){return esc(t).replace(/\[\[(.+?)\]\]/g,(m,k)=>`<span class="kw">${k}</span>`)}
-function glossBlock(...f){const ks=[];f.forEach(x=>(x||"").replace(/\[\[(.+?)\]\]/g,(m,k)=>{if(!ks.includes(k))ks.push(k)}));return ks.map(k=>`<div class="gloss"><b>「${k}」とは</b>${GLOSS[k]||""}</div>`).join("")}
-/* questions to ask = union for all chosen worries, primary first, deduped, conditional ones filtered */
+function plain(t){return (t||"").replace(/\[\[(.+?)\]\]/g,"$1")}
+function rich(t){return esc(t||"").replace(/\[\[(.+?)\]\]/g,(m,k)=>`<span class="kw">${k}</span>`)}
+function glossBlock(...f){const ks=[];f.forEach(x=>(x||"").replace(/\[\[(.+?)\]\]/g,(m,k)=>{if(!ks.includes(k))ks.push(k)}));return ks.map(k=>`<div class="gloss"><b>「${k}」とは</b>${GLOSS[k]}</div>`).join("")}
 function qList(){const out=[];S.worries.forEach(w=>QOF[w].forEach(id=>{if(!out.includes(id))out.push(id)}));return out.filter(id=>!Q[id].if||Q[id].if(S.ans))}
 function routeOf(w){return ROUTES[w].filter(s=>!s.if||s.if(S.ans))}
-function curIndex(r){const i=r.findIndex(s=>!S.done[s.pd]);return i<0?r.length:i}
+function curIndex(r){const i=r.findIndex(s=>!S.done[s.id]);return i<0?r.length:i}
+function pageName(p){return (PAGES.find(x=>x[0]===p)||[,""])[1]}
+function filledPages(){return PAGES.filter(p=>Object.values(S.notes).some(n=>n.page===p[0])).length}
 function bar(buttons,hint){
-  $("barIn").innerHTML=buttons.map(b=>`<button type="button" class="btn ${b.cls||""}" id="${b.id}">${b.label}</button>`).join("");
-  $("barHint").textContent=hint||"";
+  const prim=buttons.filter(b=>!/back/.test(b.cls||""));const backs=buttons.filter(b=>/back/.test(b.cls||""));
+  const html=`<div class="actions">${prim.map(b=>`<button type="button" class="btn wide ${b.cls||""}" id="${b.id}">${b.label}</button>`).join("")}${hint?`<p class="hint">${hint}</p>`:""}${backs.map(b=>`<button type="button" class="btn wide back-btn" id="${b.id}">${b.label}</button>`).join("")}</div>`;
+  $("screen").insertAdjacentHTML("beforeend",html);
   buttons.forEach(b=>$(b.id).onclick=b.on);
-  $("bar").hidden=!buttons.length;
 }
-function sections(){return 1+qList().length}
-function resumeText(){
-  if(!S.worries.length&&!S.revealed)return "まだ何も答えていません";
-  if(S.revealed<sections())return S.revealed===0?"次に開いたとき「気になること」から始まります":`次に開いたとき「質問${S.revealed}」から始まります`;
-  const r=routeOf(S.worries[0]);return `次に開いたとき「道のり」の${Math.min(curIndex(r)+1,r.length)}つめから始まります`;
+function side(html){$("aside").innerHTML=html||""}
+let ovTimer=null;
+function cue(main,sub){const o=$("ov");$("ovMain").textContent=main;$("ovSub").textContent=sub||"";o.hidden=false;o.classList.remove("show");void o.offsetWidth;o.classList.add("show");clearTimeout(ovTimer);ovTimer=setTimeout(()=>{o.hidden=true;o.classList.remove("show")},1300)}
+function cueFor(name){
+  if(name==="q"){const n=qList().length;return S.qi===0?["気になることを選びます","はじめに"]:[`質問 ${S.qi} / ${n}`,"次の質問です"]}
+  return ({summary:["やることを整理しました","答え終わりました"],route:["あなたのやること","画面が変わりました"],note:["エンディングノート","画面が変わりました"],send:["家族に渡す","画面が変わりました"],book:["銀行に相談する","画面が変わりました"],pro:["専門家を探す","画面が変わりました"],home:["はじめの画面","画面が変わりました"],self:["自分で調べる","画面が変わりました"],map:["画面マップ","確認用"]})[name]||["",""];
 }
-const SAVE=()=>`<p class="save">答えはこの端末に保存されています。${resumeText()}。答えはいつでも選び直せます。</p>`;
-function smoothTo(el){if(!el)return;const head=document.querySelector(".top");const off=(head?head.offsetHeight:0)+12;
-  const target=Math.max(0,el.getBoundingClientRect().top+window.pageYOffset-off);
-  if(RM()){window.scrollTo(0,target);return}
-  const start=window.pageYOffset,d=target-start,dur=800;let t0=null;
-  const step=ts=>{if(t0===null)t0=ts;const p=Math.min(1,(ts-t0)/dur);const e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;window.scrollTo(0,start+d*e);if(p<1)requestAnimationFrame(step)};
-  requestAnimationFrame(step)}
-function scrollToSec(i){requestAnimationFrame(()=>smoothTo(document.getElementById("sec"+i)))}
-function advance(i){S.revealed=Math.max(S.revealed,i+1);S.anim=i+1;S.err="";S.errAt=null;persist();V.flow();setTimeout(()=>scrollToSec(i+1),750)}
-function stepSummary(r){const c={self:0,human:0};r.forEach(s=>s.k==="human"?c.human++:c.self++);return c}
+function toolText(s){
+  if(s.tool==="heirs"){const h=heirs(S.ans);return h.n?`法定相続人は ${h.n}人${h.approx?"以上":""}（${h.who}）`:h.who}
+  if(s.tool==="tax"){const t=taxResult(S.ans);return `${t.title}。${t.body}`}
+  return "";
+}
+function agenda(){
+  const items=S.worries.map(w=>wById(w).agenda);
+  if(S.worries.includes("tax")){const t=taxResult(S.ans);if(t.level!=="unknown")items.unshift(`相続税の目安は「${t.title}」でした`)}
+  return items;
+}
 
 const V={
 home(){
   const has=S.worries.length>0;
   $("screen").innerHTML=`
    <h1>相続の準備、<br>何から始めればいいか<br>一緒に整理しましょう</h1>
-   <p class="lead">いま気になっていることを選んで、いくつかの質問に答えるだけで、あなたが次にやることを順番にお伝えします。ここで終わらせられることは、ここで終わらせます。</p>
-   <div class="card"><dl class="dl"><dt>かかる時間</dt><dd>3分ほど</dd><dt>入力するもの</dt><dd>名前や口座番号は不要です</dd><dt>途中でやめたら</dt><dd>この端末で、続きから始められます</dd></dl></div>
-   ${has?`<div class="card"><p style="font-weight:700">前回の続きがあります</p><p class="small">${resumeText().replace("次に開いたとき","")}</p></div>`:""}
-   ${S.confirmReset?`<div class="inline-confirm" role="alert">これまでの答えとメモを消して、最初から始めますか？<button type="button" class="btn sm" id="rsY">消して始める</button><button type="button" class="btn sm" id="rsN">やめる</button></div>`:(has?`<button type="button" class="link" id="reset">最初からやり直す</button>`:"")}
+   <p class="lead">気になっていることを選び、いくつかの質問に答えると、あなたがやることを順番にお伝えします。やったことは「わたしのエンディングノート」に書き込まれ、そのまま家族に渡せます。</p>
+   <div class="card"><dl class="dl"><dt>かかる時間</dt><dd>はじめは3分ほど</dd><dt>入力するもの</dt><dd>名前や口座番号は不要です</dd><dt>途中でやめたら</dt><dd>このiPadで、続きから始められます</dd></dl></div>
+   ${has?`<div class="notecard"><div><p style="font-weight:700">わたしのエンディングノート</p><p class="small">書き込んだページがあります</p></div><span class="pages">${filledPages()}/${PAGES.length}</span></div>`:""}
+   ${S.confirmReset?`<div class="inline-confirm" role="alert">これまでの答えとノートを消して、最初から始めますか？<button type="button" class="btn sm" id="rsY">消して始める</button><button type="button" class="btn sm" id="rsN">やめる</button></div>`:(has?`<button type="button" class="link" id="reset">最初からやり直す</button>`:"")}
    <button type="button" class="link" id="self">自分で調べたい方は、やることリストへ</button>
-   <p class="foot"><button type="button" class="link" id="map">試作品の画面マップ（確認用）</button></p>`;
-  $("self").onclick=()=>go("self");$("map").onclick=()=>go("map");
+   <button type="button" class="link small" id="map">試作品の画面マップ（確認用）</button>`;
+  $("self").onclick=()=>show("self");$("map").onclick=()=>show("map");
   if($("reset"))$("reset").onclick=()=>{S.confirmReset=true;V.home()};
   if($("rsY"))$("rsY").onclick=()=>{S=FRESH();try{localStorage.removeItem(KEY)}catch(e){};render()};
   if($("rsN"))$("rsN").onclick=()=>{S.confirmReset=false;V.home()};
-  const resume=()=>{if(S.revealed<sections()){go("flow");setTimeout(()=>scrollToSec(S.revealed),400)}else go("route")};
-  bar(has?[{id:"start",label:"続きから始める",cls:"primary",on:resume}]:[{id:"start",label:"寄り添いガイドで始める",cls:"primary",on:()=>{S.revealed=0;go("flow")}}]);
+  bar(has?[{id:"n",label:"続きから始める",cls:"primary",on:()=>show(S.qi>qList().length?"route":"q")}]:[{id:"n",label:"始める",cls:"primary",on:()=>show("q",{qi:0})}]);
 },
 self(){
   $("screen").innerHTML=`<h1>自分で調べるモード</h1><p class="lead">これまでどおりの「やることリスト」と「診断」を使えます。生前の準備は全44件です。</p><div class="card small">試作品では、この先は既存のそうぞくガイドの画面を想定しています。</div>`;
   bar([{id:"b",label:backLabel(),cls:"back",on:back}]);
 },
-flow(){
-  const qs=qList();const total=1+qs.length;
-  const blocks=[];
-  for(let i=0;i<=Math.min(S.revealed,total);i++){
-    const enter=S.anim===i?" enter":"";const front=i===S.revealed;
-    const err=S.errAt===i&&S.err?`<p class="err" role="alert">${S.err}</p>`:"";
-    const nextBtn=front&&i<total?`<button type="button" class="btn primary nextbtn" data-next="${i}">${i===total-1?"答え終わった":"次へ"}</button>`:"";
-    if(i===total){
-      const main=wById(S.worries[0]);const r=routeOf(S.worries[0]);const c=stepSummary(r);const others=S.worries.slice(1).map(wById);
-      blocks.push(`<section class="sec${enter}" id="sec${i}"><p class="qno">お話を整理しました</p>
-        <h1>いちばん気になっているのは<br>「${main.short}」ですね</h1>
-        <div class="card" style="display:flex;gap:16px;align-items:center"><span class="count">${r.length}</span><p>あなたがやることは<b>${r.length}つ</b>です。<br><span class="small">そのうち${c.self}つは、このサイトの中で終わります。${c.human?`人に相談するのは${c.human}つです。`:""}</span></p></div>
-        ${others.length?`<p class="small">ほかに選んだ「${others.map(o=>o.short).join("」「")}」の道のりも、道のりの画面の下にあります。</p>`:""}
-        <p class="small">上の答えは、選び直すと道のりにすぐ反映されます。</p></section>`);
-      continue;
-    }
-    if(i===0){
-      blocks.push(`<section class="sec${enter}" id="sec0"><p class="qno">はじめに</p><h1>いま、気になっていることは<br>どれですか？</h1>
-        <p class="lead">いくつ選んでも大丈夫です。一番気になるものを先に選んでください。</p>
-        <div class="choice">${WORRIES.map(w=>{const k=S.worries.indexOf(w.id);return `<button type="button" class="opt" aria-pressed="${k>=0}" data-w="${w.id}"><span class="box">${k>=0?k+1:""}</span><span>${w.label}</span></button>`}).join("")}</div>
-        <p class="small">どれにも当てはまらないときは、右上の「担当者に相談」から聞けます。</p>${err}${nextBtn}</section>`);
-      continue;
-    }
-    const id=qs[i-1];const it=Q[id];const cur=S.ans[id];
-    const pressed=a=>it.multi?has(cur,a):cur===a;
-    blocks.push(`<section class="sec${enter}" id="sec${i}"><p class="qno">質問 ${i} / ${qs.length}</p><h1>${it.q}</h1>
-      ${it.multi?'<p class="lead">いくつ選んでも大丈夫です。</p>':""}
-      <div class="choice">${it.a.map(a=>`<button type="button" class="opt ${it.multi?"":"round"}" aria-pressed="${pressed(a)}" data-q="${id}" data-a="${esc(a)}"><span class="box">${it.multi?"✓":"●"}</span><span>${a}</span></button>`).join("")}</div>
-      ${err}${nextBtn}</section>`);
+q(){
+  const qs=qList();const total=qs.length+1;const i=S.qi;
+  const prog=`<div class="prog" aria-hidden="true">${Array.from({length:total},(_,k)=>`<i class="${k<=i?"on":""}"></i>`).join("")}</div>`;
+  const err=S.err?`<p class="err" role="alert">${S.err}</p>`:"";
+  if(i===0){
+    $("screen").innerHTML=`${prog}<p class="qno">はじめに（全部で${total}つ聞きます）</p>
+     <h1>いま、気になっていることは<br>どれですか？</h1>
+     <p class="lead">いくつ選んでも大丈夫です。</p>${err}
+     <div class="choice">${WORRIES.map(w=>{const k=S.worries.indexOf(w.id);return `<button type="button" class="opt" aria-pressed="${k>=0}" data-w="${w.id}"><span class="box">✓</span><span>${w.label}</span></button>`}).join("")}</div>
+     <p class="small">どれにも当てはまらないときは、右上の「銀行に相談」から聞けます。</p>`;
+    document.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{const id=b.dataset.w;const k=S.worries.indexOf(id);k>=0?S.worries.splice(k,1):S.worries.push(id);S.err="";persist();V.q()});
+  }else{
+    const id=qs[i-1];const it=Q[id];const cur=S.ans[id];const pressed=a=>it.multi?has(cur,a):cur===a;
+    $("screen").innerHTML=`${prog}<p class="qno">質問 ${i} / ${qs.length}</p><h1>${it.q}</h1>${it.multi?'<p class="lead">いくつ選んでも大丈夫です。</p>':""}${err}
+     <div class="choice">${it.a.map(a=>`<button type="button" class="opt ${it.multi?"":"round"}" aria-pressed="${pressed(a)}" data-a="${esc(a)}"><span class="box">${it.multi?"✓":"●"}</span><span>${a}</span></button>`).join("")}</div>
+     <p class="small">分からないときは「わからない」を選んで大丈夫です。</p>`;
+    document.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{const a=b.dataset.a;
+      if(it.multi){let v=Array.isArray(S.ans[id])?S.ans[id].slice():[];v.includes(a)?v=v.filter(x=>x!==a):v.push(a);S.ans[id]=v}else S.ans[id]=a;S.err="";persist();V.q()});
   }
-  $("screen").innerHTML=`<div class="flowwrap">${blocks.join("")}</div>${SAVE()}`;
-  S.anim=null;
-  document.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{const id=b.dataset.w;const k=S.worries.indexOf(id);k>=0?S.worries.splice(k,1):S.worries.push(id);S.err="";persist();V.flow()});
-  document.querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>{const id=b.dataset.q,a=b.dataset.a;
-    if(Q[id].multi){let v=Array.isArray(S.ans[id])?S.ans[id].slice():[];v.includes(a)?v=v.filter(x=>x!==a):v.push(a);S.ans[id]=v}else S.ans[id]=a;
-    S.err="";persist();V.flow()});
-  document.querySelectorAll("[data-next]").forEach(b=>b.onclick=()=>{
-    const i=+b.dataset.next;
-    if(i===0&&!S.worries.length){S.err="1つ選んでください。";S.errAt=0;V.flow();return}
-    if(i>0){const v=S.ans[qs[i-1]];if(!v||(Array.isArray(v)&&!v.length)){S.err="1つ選んでください。「わからない」でも進めます。";S.errAt=i;V.flow();return}}
-    advance(i)});
-  const complete=S.revealed>=total;
-  const dots=`<span class="steps" aria-hidden="true">${Array.from({length:total},(_,k)=>`<i class="${k<S.revealed?"on":""}${k===S.revealed?" cur":""}"></i>`).join("")}</span>`;
-  bar([{id:"b",label:backLabel(),cls:"back",on:back},complete?{id:"n",label:"道のりを見る",cls:"primary",on:()=>go("route")}:{id:"n",label:`${dots}<small>${S.revealed===0?"気になることを選んでいます":`質問 ${S.revealed} / ${qs.length}`}</small>`,cls:"stepper",on:()=>scrollToSec(S.revealed)}]);
+  const last=i===total-1;
+  bar([{id:"b",label:backLabel(),cls:"back",on:back},{id:"n",label:last?"答え終わった<small>次の画面で、やることをお伝えします</small>":`次へ<small>次は 質問 ${i+1} / ${qs.length}</small>`,cls:"primary",on:()=>{
+    if(i===0&&!S.worries.length){S.err="1つ選んでください。";V.q();return}
+    if(i>0){const v=S.ans[qs[i-1]];if(!v||(Array.isArray(v)&&!v.length)){S.err="1つ選んでください。「わからない」でも進めます。";V.q();return}}
+    if(last){S.qi=total;show("summary")}else show("q",{qi:i+1})}}]);
+},
+summary(){
+  const w=S.worries[0];const r=routeOf(w);const self=r.filter(s=>s.k!=="human").length;
+  const pages=[...new Set(r.filter(s=>s.page).map(s=>pageName(s.page)))];
+  $("screen").innerHTML=`
+   <p class="qno">答えていただいた内容から</p>
+   <h1>あなたがやることは<br>${r.length}つです</h1>
+   <div class="card"><p>まずは「${plain(r[0].t)}」から始めましょう。${r[0].time}ほどで終わります。</p>
+   <p class="small">${self}つは、この画面の中で終わります。${r.length-self?`最後の1つは、人に相談します。`:""}</p></div>
+   <div class="notecard"><div><p style="font-weight:700">終わると、エンディングノートに書き込まれます</p><p class="small">「${pages.join("」「")}」のページ</p></div></div>
+   ${S.worries.length>1?`<p class="small">ほかに選んだ「${S.worries.slice(1).map(x=>wById(x).short).join("」「")}」は、これが終わったらご案内します。</p>`:""}`;
+  bar([{id:"b",label:backLabel(),cls:"back",on:back},{id:"n",label:"やることを見る",cls:"primary",on:()=>show("route")}]);
 },
 route(){
-  const w=S.worries[0];const all=routeOf(w);const cur=curIndex(all);const allDone=cur>=all.length;
-  const shown=all.slice(0,MAXSTEPS);const later=all.slice(MAXSTEPS);
-  const toolBody=s=>{
-    if(s.tool==="heirs"){const h=heirs(S.ans);return `<div class="result"><p class="small">あなたの答えから</p><p class="big">${h.n?`法定相続人は ${h.n}人${h.approx?"以上":""}`:"まだ分かりません"}</p><p>${esc(h.who)}${h.spUnknown?"（夫・妻の答えが「わからない」のため、含めていません）":""}</p></div>`}
-    if(s.tool==="tax"){const t=taxResult(S.ans);return `<div class="result ${t.level}"><p class="small">相続税の目安</p><p class="big">${t.title}</p><p>${t.body}</p><p class="small">あくまで目安です。自宅の土地は条件により評価が大きく下がる特例があるなど、実際とずれる場合があります。</p></div>`}
-    return "";};
+  const w=S.worries[0];const all=routeOf(w);const cur=curIndex(all);const done=cur>=all.length;
+  const nextW=S.worries.find(x=>x!==w&&curIndex(routeOf(x))<routeOf(x).length);
   $("screen").innerHTML=`
-   <p class="qno">あなたの道のり：${wById(w).short}</p>
-   <h1>${allDone?"すべて終わりました":`つぎは、${plain(all[cur].t)}`}</h1>
-   <p class="small">${allDone?"お疲れさまでした。書いたメモはこの画面でいつでも見られます。":`あと${all.length-cur}つ。いまのステップは色が付いています。`}</p>
-   <ol class="road">${shown.map((s,i)=>{
-     const st=S.done[s.pd]?"done":i===cur?"now":"";const memo=S.memos[s.pd]||"";
-     return `<li class="${st}" id="st${i}"><span class="dot" aria-hidden="true">${S.done[s.pd]?"✓":i+1}</span><div style="min-width:0">
-      <div class="acc"><span><b>${plain(s.t)}</b><span class="small">${S.done[s.pd]?"できました":i===cur?"いまここ・"+s.time+"ほど":"このあと・"+s.time+"ほど"}</span></span><span class="kind k-${kindOf(s)}">${KIND[kindOf(s)]}</span></div>
-      <div class="panel${S.anim==="r"+i?" enter":""}${i>cur?" later":""}">
-        ${S.flash&&i===cur?`<p class="flash" role="status">✓ ${S.flash}${S.lastDone?` <button type="button" class="undo" data-undo="${S.lastDone}">取り消す</button>`:""}</p>`:""}
-        <dl class="dl"><dt>やること</dt><dd>${rich(s.t)}</dd>${s.bring?`<dt>用意するもの</dt><dd>${rich(s.bring)}</dd>`:""}<dt>時間</dt><dd>${s.time}ほど</dd><dt>終わりの目安</dt><dd>${rich(s.done)}</dd><dt>元のタスク</dt><dd class="small">${/^\d/.test(s.pd)?"やることリスト "+s.pd:"寄り添いガイド独自の案内"}</dd></dl>
-        ${glossBlock(s.t,s.bring,s.done)}
-        ${toolBody(s)}
-        ${s.memo?`<label for="m${s.pd}" style="font-weight:700;font-size:16px">${["0001","0002","0003"].includes(s.pd)?"財産メモ（書いた内容は保存されます）":"ここに書けます（書いた内容は保存されます）"}</label><textarea id="m${s.pd}" data-pd="${s.pd}" placeholder="${esc(s.memo)}">${esc(memo)}</textarea><span class="saved" id="sv${s.pd}">${memo?"保存しました":""}</span>`:""}
-        ${i===cur?(s.k==="human"?`<p style="font-weight:700;font-size:16px">相談する相手を選べます</p><button type="button" class="btn primary" id="doBook">銀行の担当者に相談する<small>無料・電話/お店/LINE</small></button>${prosFor(s).length?`<button type="button" class="btn" id="doPro">${prosFor(s).join("・")}を探す<small>このサイトの専門家さがし</small></button>`:""}<button type="button" class="link" id="doDone">もう済んでいるので、次へ進む</button>`:`<button type="button" class="btn primary" id="doDone">できた</button><button type="button" class="link" id="doLine">続きをLINEで受け取る</button>`):""}
-      </div></div></li>`}).join("")}</ol>
-   ${later.length?`<div class="card"><h2 style="font-size:17px">この先にあること</h2><ul class="plainlist">${later.map(s=>`<li>${plain(s.t)}（${KIND[kindOf(s)]}）</li>`).join("")}</ul></div>`:""}
-   ${S.worries.length>1?`<h2>ほかに選んだこと</h2>${S.worries.slice(1).map(o=>{const r=routeOf(o);const c=curIndex(r);return `<div class="card other"><p style="font-weight:700">${wById(o).short}</p><ol class="plainlist">${r.map((s,i)=>`<li class="${S.done[s.pd]?"isdone":""}">${S.done[s.pd]?"✓ ":""}${plain(s.t)} <span class="small">（${KIND[kindOf(s)]}）</span></li>`).join("")}</ol><button type="button" class="btn sm" data-swap="${o}">こちらを先に進める</button></div>`}).join("")}`:""}
-   ${SAVE()}`;
-  S.anim=null;
-  document.querySelectorAll("textarea").forEach(t=>t.oninput=()=>{S.memos[t.dataset.pd]=t.value;persist();const s=$("sv"+t.dataset.pd);if(s)s.textContent="保存しました"});
-  document.querySelectorAll("[data-undo]").forEach(b=>b.onclick=()=>{delete S.done[b.dataset.undo];S.flash="";S.lastDone=null;persist();V.route()});
-  document.querySelectorAll("[data-swap]").forEach(b=>b.onclick=()=>{const o=b.dataset.swap;S.worries=[o,...S.worries.filter(x=>x!==o)];S.flash="";persist();V.route();window.scrollTo(0,0)});
-  if($("doDone"))$("doDone").onclick=()=>{const s=all[cur];S.done[s.pd]=true;S.lastDone=s.pd;const nc=curIndex(routeOf(w));S.flash=`「${plain(s.t)}」ができました。次はこちらです`;S.anim="r"+nc;persist();V.route();setTimeout(()=>smoothTo($("st"+nc)),750)};
-  if($("doBook"))$("doBook").onclick=()=>go("book");
-  if($("doPro"))$("doPro").onclick=()=>{S.proFor=prosFor(all[cur]);go("pro")};
-  if($("doLine"))$("doLine").onclick=()=>go("line");
-  bar([{id:"b",label:backLabel(),cls:"back",on:back},{id:"n",label:"担当者に相談する",cls:"primary",on:()=>go("book")}],"相談すると、この道のりとメモを担当者に伝えられます");
+   <p class="qno">あなたのやること：${wById(w).short}</p>
+   <h1>${done?"ここまで、すべて終わりました":`いまやることは<br>「${plain(all[cur].t)}」`}</h1>
+   ${S.flash?`<p class="flash" role="status">✓ ${S.flash}${S.lastDone?`<button type="button" class="undo" id="undo">取り消す</button>`:""}</p>`:""}
+   <ol class="road">${all.map((s,i)=>{const st=S.done[s.id]?"done":i===cur?"now":"";
+     return `<li class="${st}" id="st${i}"><span class="dot" aria-hidden="true">${S.done[s.id]?"✓":i+1}</span><div class="st" style="min-width:0">
+       <b>${plain(s.t)}</b><span class="small">${S.done[s.id]?"終わりました":i===cur?`いまここ・${s.time}ほど・${KIND[s.k]}`:`このあと・${s.time}ほど・${KIND[s.k]}`}</span>
+       ${s.page?`<span class="goes">ノートの「${pageName(s.page)}」に${S.done[s.id]?"書きました":"書き込まれます"}</span>`:""}
+       ${i===cur?work(s):""}
+     </div></li>`}).join("")}</ol>
+   <div class="notecard"><div><p style="font-weight:700">わたしのエンディングノート</p><p class="small">${filledPages()}ページ書き込みました</p></div><button type="button" class="btn sm" id="openNote">ノートを見る</button></div>
+   ${done&&nextW?`<div class="card"><p style="font-weight:700">次は「${wById(nextW).short}」に進めます</p><button type="button" class="btn primary wide" id="nextW">こちらを始める</button></div>`:""}`;
+  bindWork(all,cur);
+  $("openNote").onclick=()=>show("note");
+  if($("undo"))$("undo").onclick=()=>{const id=S.lastDone;delete S.done[id];delete S.notes[id];S.flash="";S.lastDone=null;persist();render()};
+  if($("nextW"))$("nextW").onclick=()=>{S.worries=[nextW,...S.worries.filter(x=>x!==nextW)];S.flash="";S.lastDone=null;persist();show("route")};
+  bar([{id:"b",label:backLabel(),cls:"back",on:back},{id:"n",label:"ノートを家族に渡す<small>LINE・印刷</small>",cls:"",on:()=>show("send")}]);
+}
+,
+note(){
+  $("screen").innerHTML=`
+   <p class="qno">このiPadの中のノート</p>
+   <h1>わたしの<br>エンディングノート</h1>
+   <p class="lead">やることを終えるたびに、ここに書き込まれます。家族に渡すと、もしものときに家族が困りません。</p>
+   ${PAGES.map(([p,name])=>{const es=Object.entries(S.notes).filter(([,n])=>n.page===p);
+     return `<section class="page ${es.length?"":"empty"}"><h2>${name}</h2>${es.length?es.map(([,n])=>`<div class="entry"><b>${esc(n.label)}</b>${esc(n.text)}</div>`).join(""):`<p class="small">まだ書いていません</p>`}</section>`}).join("")}`;
+  bar([{id:"b",label:backLabel(),cls:"back",on:back},{id:"n",label:"家族に渡す<small>LINE・印刷</small>",cls:"primary",on:()=>show("send")}]);
+},
+send(){
+  $("screen").innerHTML=`
+   <p class="qno">家族に渡す</p>
+   <h1>ノートを家族に<br>渡しましょう</h1>
+   <p class="lead">${filledPages()}ページ書き込んだノートを、家族に届けられます。次に会ったとき、続きを一緒に書くきっかけにもなります。</p>
+   <div class="choice">
+    <button type="button" class="opt round" aria-pressed="${S.sendBy==="line"}" data-s="line"><span class="box">●</span><span>LINEで送る<br><span class="small">お子さんのLINEに、ノートの写しが届きます</span></span></button>
+    <button type="button" class="opt round" aria-pressed="${S.sendBy==="print"}" data-s="print"><span class="box">●</span><span>紙に印刷する<br><span class="small">家のプリンターや、銀行の窓口で印刷できます</span></span></button>
+    <button type="button" class="opt round" aria-pressed="${S.sendBy==="app"}" data-s="app"><span class="box">●</span><span>わが家ノート（三菱UFJ信託銀行のアプリ）に移す<br><span class="small">家族に見せるタイミングを選んで残せます</span></span></button>
+   </div>
+   ${S.err?`<p class="err" role="alert">${S.err}</p>`:""}
+   <p class="note">試作品のため、実際の送信・印刷は行われません。</p>`;
+  document.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>{S.sendBy=b.dataset.s;S.err="";V.send()});
+  bar([{id:"b",label:backLabel(),cls:"back",on:back},{id:"n",label:"渡す",cls:"primary",on:()=>{if(!S.sendBy){S.err="渡し方を1つ選んでください。";V.send();return}S.flash="ノートを家族に渡しました（試作）";S.lastDone=null;show("route")}}]);
 },
 book(){
-  const has=S.worries.length>0;const memoCount=Object.values(S.memos).filter(Boolean).length;
-  let where="";if(has){const r=routeOf(S.worries[0]);const c=curIndex(r);where=c<r.length?`${c+1} / ${r.length}「${plain(r[c].t)}」`:"すべて完了"}
-  const t=has&&(S.worries.includes("tax"))?taxResult(S.ans):null;
+  const has=S.worries.length>0;const ag=has?agenda():[];
   $("screen").innerHTML=`
-   <p class="qno">担当者に相談</p>
-   <h1>銀行の担当者と話す<br>予約ができます</h1>
-   <p class="lead">${has?"ここまでの内容を先に伝えておくので、最初から説明しなくて大丈夫です。":"何から聞けばいいか分からなくても大丈夫です。担当者が一緒に整理します。"}相談は無料です。</p>
-   ${has?`<div class="card"><h2 style="font-size:17px;margin-bottom:8px">担当者に伝わる内容</h2>
-    <dl class="dl"><dt>気になること</dt><dd>${S.worries.map(id=>wById(id).short).join("、")}</dd><dt>いまの場所</dt><dd>${where}</dd>${t?`<dt>相続税の目安</dt><dd>${t.title}</dd>`:""}<dt>答えた内容</dt><dd>${qList().map(id=>S.ans[id]?Q[id].short+"："+(Array.isArray(S.ans[id])?S.ans[id].join("・"):S.ans[id]):"").filter(Boolean).join("／")||"なし"}</dd><dt>書いたメモ</dt><dd>${memoCount?memoCount+"件":"なし"}</dd></dl></div>`:""}
+   <p class="qno">銀行に相談</p>
+   <h1>銀行の相談員と話す<br>予約ができます</h1>
+   <p class="lead">相続にくわしい銀行の相談員が、電話・お店・LINEでお話を聞きます。相談は無料です。${has?"話すことは、ここで用意しておきます。":"何から聞けばいいか分からなくても大丈夫です。相談員が一緒に整理します。"}</p>
+   ${has?`<div class="card"><h2 style="font-size:18px">相談員と話すこと</h2><ol class="agenda">${ag.map(a=>`<li>${esc(a)}</li>`).join("")}</ol>
+   <p class="small">エンディングノート（${filledPages()}ページ）も見せながら話せます。最初から説明しなくて大丈夫です。</p></div>`:""}
    ${S.err?`<p class="err" role="alert">${S.err}</p>`:""}
    <p style="font-weight:700">相談の方法を選んでください</p>
-   <div class="choice">${[["電話で話す","担当者から電話します"],["お店で話す","近くの店舗で、日時を決めて"],["LINEで聞く","文字で気軽に"]].map(([c,d])=>`<button type="button" class="opt round" aria-pressed="${S.contact===c}" data-c="${c}"><span class="box">●</span><span>${c}<br><span class="small">${d}</span></span></button>`).join("")}</div>
-   ${has?`<label class="consent" for="ok"><input type="checkbox" id="ok" ${S.consent?"checked":""}>上の内容を担当者に伝えることに同意します</label>`:""}
+   <div class="choice">${[["電話で話す","相談員から電話します"],["お店で話す","近くの店舗で、日時を決めて"],["LINEで聞く","文字で気軽に"]].map(([c,d])=>`<button type="button" class="opt round" aria-pressed="${S.contact===c}" data-c="${c}"><span class="box">●</span><span>${c}<br><span class="small">${d}</span></span></button>`).join("")}</div>
+   ${has?`<label class="consent" for="ok"><input type="checkbox" id="ok" ${S.consent?"checked":""}>話すことと、ノートを相談員に伝えることに同意します</label>`:""}
    <p class="note">試作品のため、実際の予約は行われません。</p>`;
-  document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{S.contact=b.dataset.c;S.err="";V.book()});
+  document.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{S.contact=b.dataset.c;S.err="";V.book()});
   if($("ok"))$("ok").onchange=e=>{S.consent=e.target.checked;S.err=""};
   bar([{id:"b",label:backLabel(),cls:"back",on:back},{id:"n",label:"この内容で予約する",cls:"primary",on:()=>{
     if(!S.contact){S.err="相談の方法を1つ選んでください。";V.book();return}
-    if(has&&!S.consent){S.err="担当者に伝えてよいか、チェックを入れてください。";V.book();return}
-    go("booked")}}]);
-},
-booked(){
-  $("screen").innerHTML=`
-   <p class="flash">✓ 予約を受け付けました（試作）</p>
-   <h1>担当者から<br>ご連絡します</h1>
-   <div class="card"><dl class="dl"><dt>方法</dt><dd>${S.contact}</dd><dt>伝わる内容</dt><dd>${S.worries.length?"気になること・いまの場所・答えた内容・メモ":"なし（担当者が一緒に整理します）"}</dd></dl></div>
-   <p class="lead">相談の日まで、道のりとメモはそのまま残ります。</p>`;
-  bar([{id:"n",label:S.worries.length?"道のりに戻る":"はじめの画面へ",cls:"primary",on:()=>{S.hist=[];S.screen=S.worries.length?"route":"home";render()}}]);
+    if(has&&!S.consent){S.err="相談員に伝えてよいか、チェックを入れてください。";V.book();return}
+    const r=has?routeOf(S.worries[0]):[];const hs=r.find(s=>s.k==="human"&&!S.done[s.id]);
+    if(hs){S.done[hs.id]=true;S.lastDone=null;S.flash="相談の予約を受け付けました（試作）。相談員からご連絡します"}
+    persist();show(has?"route":"home")}}]);
 },
 pro(){
   const list=S.proFor&&S.proFor.length?S.proFor:["弁護士","税理士","司法書士"];
-  const memoCount=Object.values(S.memos).filter(Boolean).length;
   $("screen").innerHTML=`
    <p class="qno">専門家を探す</p>
    <h1>${list.join("・")}を<br>探せます</h1>
-   <p class="lead">そうぞくガイドに掲載している、相続にくわしい専門家の事務所を、お住まいの地域から探せます。</p>
-   ${list.map(p=>`<div class="card"><h2 style="font-size:18px">${p}</h2><dl class="dl" style="margin-top:6px"><dt>こんなとき</dt><dd>${PROINFO[p].role}</dd><dt>費用の目安</dt><dd>${PROINFO[p].fee}</dd></dl></div>`).join("")}
-   <div class="card"><p style="font-weight:700">相談のときに見せられるもの</p><p class="small">この道のりと${memoCount?`書いたメモ（${memoCount}件）`:"答えた内容"}を、画面で見せながら話せます。銀行の担当者への相談と違い、内容が自動で伝わることはありません。</p></div>
+   <p class="lead">そうぞくガイドに掲載している、相続にくわしい事務所を、お住まいの地域から探せます。</p>
+   ${list.map(p=>`<div class="card"><h2 style="font-size:18px">${p}</h2><dl class="dl"><dt>こんなとき</dt><dd>${PROINFO[p].role}</dd><dt>費用の目安</dt><dd>${PROINFO[p].fee}</dd></dl></div>`).join("")}
+   <div class="card"><p style="font-weight:700">相談のときに見せられるもの</p><p class="small">エンディングノートを画面や紙で見せながら話せます。</p></div>
    <p class="note">試作品のため、この先は既存の「専門家をさがす」（都道府県から探す画面）を想定しています。</p>`;
   bar([{id:"b",label:backLabel(),cls:"back",on:back},{id:"n",label:"お住まいの地域から探す",cls:"primary",on:back}]);
 },
-line(){
-  $("screen").innerHTML=`
-   <p class="qno">続きをLINEで</p>
-   <h1>次の一歩を<br>LINEでお知らせします</h1>
-   <div class="card"><dl class="dl"><dt>届く内容</dt><dd>次にやることと、道のりへの入口</dd><dt>頻度</dt><dd>週に1回まで。いつでも止められます</dd></dl></div>
-   <p class="note">試作品のため、実際の登録は行われません。</p>`;
-  bar([{id:"b",label:backLabel(),cls:"back",on:back},{id:"n",label:"友だち追加する（試作）",cls:"primary",on:back}]);
-},
 map(){
+  const rm=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;const ios=navigator.userAgent.match(/OS (\d+)_(\d+)/);
   $("screen").innerHTML=`
-   <p class="qno">確認用</p>
-   <h1>画面マップ</h1>
-   <div class="card small">この端末の状態：動きを減らす設定 ${RM()?"<b>オン</b>（動きは控えめのフェードのみ）":"オフ"}／${(navigator.userAgent.match(/OS (\d+)_(\d+)/)||[]).length?"iOS "+navigator.userAgent.match(/OS (\d+)_(\d+)/).slice(1).join("."):"iOS以外"}</div>
+   <p class="qno">確認用</p><h1>画面マップ</h1>
+   <div class="card small">この端末：動きを減らす設定 ${rm?"オン":"オフ"}／${ios?"iOS "+ios.slice(1).join("."):"iOS以外"}</div>
    <div class="card map"><ol>
-    <li>はじめの画面<div class="br">分岐：自分で調べる → 既存のやることリスト（44件・変更なし）</div></li>
-    <li>質問のページ（縦に続く1ページ。選んで「次へ」）
-      <div class="br">気になること（7択・複数可）→ 選んだものに関係する質問だけを、まとめて聞く（重複は1回）</div>
-      <div class="br">最後に「お話を整理しました」：やることの数と、そのうちサイト内で終わる数</div></li>
-    <li>あなたの道のり（既存タスクから、当てはまるものだけを並べる。3〜6個、超えた分は下にまとめる）
-      <div class="br">種類：読んで終わります／書いて残します／その場で分かります（相続人と相続税の目安）／人に相談します（銀行の担当者か、専門家を探すかを選べる）</div>
-      <div class="br">下に「ほかに選んだこと」の道のりも並ぶ</div></li>
-    <li>担当者に相談（右上のボタンからはいつでも）</li>
+    <li>はじめの画面（続きがあれば「続きから始める」）</li>
+    <li>質問（1画面に1問。「次へ」で画面が切り替わる。「戻る」で前の質問へ）：気になること → 選んだものに関係する質問だけ</li>
+    <li>整理：やることの数、最初の一歩、ノートのどのページに書き込まれるか</li>
+    <li>やること（道のり）：全ステップの名前は最初から見える。いまのステップだけ、その場で作業する
+      <br>種類：書いてノートに残す／読んで、決めたことを残す／その場で分かる／人に相談する</li>
+    <li>エンディングノート：8ページ。終えたステップの結果が書き込まれる → 家族に渡す（LINE・印刷・わが家ノート）</li>
+    <li>人に相談する：銀行の相談員（話すことを用意して予約）または専門家を探す</li>
    </ol></div>
-   ${WORRIES.map(w=>`<div class="card map"><p style="font-weight:700">${w.label}</p>
-     <p class="small">聞く質問：${QOF[w.id].map(id=>Q[id].short+"（"+Q[id].src+"）").join("、")}</p>
-     <ol>${ROUTES[w.id].map(s=>`<li>${plain(s.t)} <span class="small">［${KIND[kindOf(s)]}${s.if?"・当てはまる人だけ":""}］${/^\d/.test(s.pd)?" "+s.pd:""}</span></li>`).join("")}</ol></div>`).join("")}`;
+   ${WORRIES.map(w=>`<div class="card map"><p style="font-weight:700">${w.label}</p><p class="small">質問：${QOF[w.id].map(id=>Q[id].short).join("、")}</p><ol>${ROUTES[w.id].map(s=>`<li>${plain(s.t)} <span class="small">［${KIND[s.k]}${s.page?"→ノート「"+pageName(s.page)+"」":""}${s.if?"・当てはまる人だけ":""}］</span></li>`).join("")}</ol></div>`).join("")}`;
   bar([{id:"b",label:backLabel(),cls:"back",on:back}]);
 }
 };
-function render(){(V[S.screen]||V.home)();}
-$("askBtn").onclick=()=>{if(S.screen!=="book")go("book")};
+/* the current step is worked in place */
+function work(s){
+  const g=glossBlock(s.t,s.bring,s.about);
+  if(s.k==="write"){const d=S.draft[s.id]||"";
+    return `<div class="work">
+      ${s.bring?`<p><b>用意するもの：</b>${rich(s.bring)}</p>`:""}${g}
+      <div class="field"><label for="ta">ここに書きます（文字を打つか、下の言葉を押してください）</label>
+       <div class="chips">${(s.chips||[]).map(c=>`<button type="button" class="chip" data-chip="${esc(c)}">${esc(c)}</button>`).join("")}</div>
+       <textarea id="ta" placeholder="${esc(s.ph)}">${esc(d)}</textarea></div>
+      ${S.err?`<p class="err" role="alert">${S.err}</p>`:""}
+      <button type="button" class="btn primary wide" id="doWrite">ノートに書く<small>「${pageName(s.page)}」のページに書き込まれます</small></button>
+      <button type="button" class="link" id="skip">今は書かずに、次へ進む</button></div>`}
+  if(s.k==="decide"){return `<div class="work"><p>${rich(s.about)}</p>${g}
+      <p style="font-weight:700">${esc(s.ask)}</p>
+      <div class="choice">${s.opts.map(o=>`<button type="button" class="opt round" aria-pressed="${S.pick[s.id]===o}" data-pick="${esc(o)}"><span class="box">●</span><span>${esc(o)}</span></button>`).join("")}</div>
+      ${S.err?`<p class="err" role="alert">${S.err}</p>`:""}
+      <button type="button" class="btn primary wide" id="doDecide">ノートに書く<small>「${pageName(s.page)}」のページに書き込まれます</small></button></div>`}
+  if(s.k==="calc"){const t=s.tool==="tax"?taxResult(S.ans):null;
+    return `<div class="work">${g}<div class="result"><p class="small">答えていただいた内容から</p><p class="big">${s.tool==="heirs"?esc(toolText(s).split("（")[0]):esc(t.title)}</p><p>${s.tool==="heirs"?esc((toolText(s).match(/（(.+)）/)||[,""])[1]):esc(t.body)}</p>${s.tool==="tax"?`<p class="small">あくまで目安です。自宅の土地は評価が大きく下がる特例があるなど、実際とずれる場合があります。</p>`:""}</div>
+      <button type="button" class="btn primary wide" id="doCalc">ノートに書く<small>「${pageName(s.page)}」のページに書き込まれます</small></button></div>`}
+  return `<div class="work"><p>ここから先は、人と一緒に進めると安心です。相談する相手を選べます。</p>
+      <button type="button" class="btn primary wide" id="doBook">銀行の銀行に相談する<small>無料・話すことを用意して予約</small></button>
+      ${s.pro&&s.pro.length?`<button type="button" class="btn wide" id="doPro">${s.pro.join("・")}を探す<small>そうぞくガイドの専門家さがし</small></button>`:""}
+      <button type="button" class="link" id="skip">もう相談したので、次へ進む</button></div>`;
+}
+function finish(s,text){S.done[s.id]=true;if(s.page&&text!=null)S.notes[s.id]={page:s.page,label:plain(s.t).replace(/(を|の)?(決めて書く|書く|見る|確かめる|考える|決める)$/,""),text};S.lastDone=s.id;S.flash=s.page&&text!=null?`ノートの「${pageName(s.page)}」に書きました`:`「${plain(s.t)}」を終えました`;S.err="";delete S.draft[s.id];persist();render();window.scrollTo(0,0);cue(s.page&&text!=null?`ノートの「${pageName(s.page)}」に書きました`:"次のやることに進みます",s.page&&text!=null?"書けました":"")}
+function bindWork(all,cur){
+  const s=all[cur];if(!s)return;
+  const ta=$("ta");
+  if(ta)ta.oninput=()=>{S.draft[s.id]=ta.value;persist()};
+  document.querySelectorAll("[data-chip]").forEach(b=>b.onclick=()=>{const v=b.dataset.chip;ta.value=ta.value?ta.value+"、"+v:v;S.draft[s.id]=ta.value;persist();ta.focus()});
+  if($("doWrite"))$("doWrite").onclick=()=>{const v=(ta.value||"").trim();if(!v){S.err="ひとことでも書くか、上の言葉を押してください。書かずに進むこともできます。";V.route();return}finish(s,v)};
+  if($("doDecide"))$("doDecide").onclick=()=>{const v=S.pick[s.id];if(!v){S.err="1つ選んでください。";V.route();return}finish(s,`${s.ask} → ${v}`)};
+  document.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>{S.pick[s.id]=b.dataset.pick;S.err="";V.route()});
+  if($("doCalc"))$("doCalc").onclick=()=>finish(s,toolText(s));
+  if($("doBook"))$("doBook").onclick=()=>show("book");
+  if($("doPro"))$("doPro").onclick=()=>{S.proFor=s.pro;show("pro")};
+  if($("skip"))$("skip").onclick=()=>finish(s,null);
+}
+function sideFor(name){
+  const notePrev=()=>`<div class="notecard"><div><p style="font-weight:700">わたしのエンディングノート</p><p class="small">${filledPages()} / ${PAGES.length}ページ</p></div></div>
+    <div class="page">${PAGES.map(([p,n])=>{const c=Object.values(S.notes).filter(x=>x.page===p).length;return `<p class="${c?"":"small"}">${c?"✓ ":"・"}${n}${c?`（${c}）`:""}</p>`}).join("")}</div>`;
+  if(name==="q"){const qs=qList();const rows=[];if(S.worries.length)rows.push(`<p><span class="small">気になること</span><br>${S.worries.map(w=>wById(w).short).join("、")}</p>`);
+    qs.forEach((id,i)=>{if(i<S.qi-1&&S.ans[id])rows.push(`<p><span class="small">${Q[id].short}</span><br>${Array.isArray(S.ans[id])?S.ans[id].join("・"):S.ans[id]}</p>`)});
+    return `<div class="card"><h2 style="font-size:17px">これまでの答え</h2>${rows.join("")||'<p class="small">まだありません</p>'}<p class="small">「戻る」で前の質問に戻って、選び直せます。</p></div>`}
+  if(name==="summary"||name==="route"||name==="send")return notePrev()+(name==="route"?`<div class="card"><p style="font-weight:700">迷ったら、銀行に相談</p><p class="small">相続にくわしい相談員が、無料でお話を聞きます。</p><button type="button" class="btn wide" id="sideBook">銀行に相談する</button></div>`:"");
+  if(name==="book")return `<div class="card"><h2 style="font-size:17px">予約のあと</h2><p class="small">相談員から、選んだ方法でご連絡します。ノートと話すことは、相談の日まで残ります。</p></div>`;
+  return "";
+}
+function render(){side("");(V[S.screen]||V.home)();side(sideFor(S.screen));if($("sideBook"))$("sideBook").onclick=()=>show("book");}
+$("ov").onclick=()=>{$("ov").hidden=true};
+$("askBtn").onclick=()=>{if(S.screen!=="book")show("book")};
 render();
 </script>
