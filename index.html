@@ -28,7 +28,8 @@ body{margin:0;-webkit-text-size-adjust:100%;background:var(--bg);color:var(--fg)
 .app{max-width:560px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;padding-inline:16px}
 /* header: the only always-present place for note and consult */
 .top{position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);display:flex;align-items:center;gap:var(--s1);padding-block:var(--s1);z-index:2;border-bottom:1px solid var(--line)}
-.brand{font-family:var(--display);font-weight:700;font-size:16px;display:flex;gap:6px;align-items:center;margin-right:auto;line-height:1.3}
+.brand{font:inherit;font-family:var(--display);font-weight:700;font-size:16px;display:flex;flex-direction:column;align-items:flex-start;margin-right:auto;line-height:1.3;background:none;border:0;padding:4px 0;color:var(--fg);cursor:pointer;min-height:44px;text-align:left}
+.brand small{font-family:var(--body);font-weight:400;font-size:13px;color:var(--accent-ink);text-decoration:underline;text-underline-offset:2px}
 .tag{font-family:var(--body);font-size:12px;font-weight:400;border:1px solid var(--line);border-radius:999px;padding:0 6px;color:var(--sub)}
 .util{font:inherit;font-size:15px;font-weight:700;color:var(--accent-ink);background:transparent;border:1px solid var(--line);border-radius:var(--r);padding:4px 10px;min-height:44px;cursor:pointer;line-height:1.2}
 .util.strong{background:var(--accent-soft);border-color:var(--accent-soft)}
@@ -189,7 +190,7 @@ main{animation:fade .45s ease-out both}
 
 <div class="app">
   <header class="top">
-    <div class="brand">相続準備ガイド <span class="tag">試作品</span></div>
+    <button type="button" class="brand" id="homeBtn"><span>相続準備ガイド <span class="tag">試作品</span></span><small>はじめの画面へ</small></button>
     <button class="util" id="noteBtn" type="button">ノート <b id="noteN">0</b></button>
     <button class="util strong" id="askBtn" type="button">相談する</button>
   </header>
@@ -381,8 +382,11 @@ home(){
   $("screen").innerHTML=`
    <h1>相続の準備を、<br>一つずつ進めましょう</h1>
    <p class="lead">いくつかの質問に答えると、あなたがやることを順番にお伝えします。</p>
-   <section class="panel"><h2 style="font-size:18px">進め方</h2><ol class="plain">${PHASES.map(p=>`<li>${p}</li>`).join("")}</ol></section>
-   <p class="small">はじめは3分ほど。名前や口座番号は入力しません。</p>
+   <section class="panel"><h2 style="font-size:18px">進め方</h2><ol class="plain">
+     <li><b>ノートを書く</b><br><span class="small">やることを1つずつ書くと、「わたしのエンディングノート」にまとまります。右上の「ノート」から、いつでも見られます。</span></li>
+     <li><b>家族がそろう日を決める</b></li>
+     <li><b>ノートを一緒に開く</b></li></ol></section>
+   <p class="small">はじめは3分ほど。途中でやめても、続きから始められます。</p>
    ${S.confirmReset?`<div class="inline-confirm" role="alert">これまでの答えとノートを消しますか？<button type="button" class="btn sm" id="rsY">消して始める</button><button type="button" class="btn sm" id="rsN">やめる</button></div>`:""}`;
   if($("rsY"))$("rsY").onclick=()=>{S=FRESH();try{localStorage.removeItem(KEY)}catch(e){};render()};
   if($("rsN"))$("rsN").onclick=()=>{S.confirmReset=false;V.home()};
@@ -422,7 +426,7 @@ summary(){
    <p class="eyebrow">答えていただいた内容から</p>
    <h1>やることは${ss.length}つです</h1>
    <ol class="plain">${ss.map(s=>`<li>${plain(s.t)}</li>`).join("")}</ol>
-   <p class="small">全部で${mins(ss)}分ほど。書いたことは、エンディングノートに残ります。</p>
+   <p class="small">全部で${mins(ss)}分ほど。書いたことは「わたしのエンディングノート」にまとまり、右上の「ノート」から見られます。</p>
    ${S.worries.length>1?`<p class="small">ほかに選んだ「${S.worries.slice(1).map(x=>wById(x).short).join("」「")}」は、このあとご案内します。</p>`:""}`;
   bar([{id:"n",label:"1つめを始める",cls:"primary",on:()=>show("route")},{id:"b",label:backLabel(),cls:"back",on:back}]);
 },
@@ -686,6 +690,7 @@ $("ov").onclick=()=>{$("ov").hidden=true};
 try{S.pcLayout=localStorage.getItem(KEY+"-lay2")||"a"}catch(e){S.pcLayout="a"}
 if(window.matchMedia){const mq=window.matchMedia("(min-width:900px)");const rr=()=>{if(S.screen==="route"||S.screen==="q")render()};mq.addEventListener?mq.addEventListener("change",rr):mq.addListener&&mq.addListener(rr)}
 $("askBtn").onclick=()=>{if(S.screen!=="consult")show("consult")};
+$("homeBtn").onclick=()=>{if(S.screen!=="home")show("home")};
 $("noteBtn").onclick=()=>{if(S.screen!=="note")show("note")};
 render();
 </script>
