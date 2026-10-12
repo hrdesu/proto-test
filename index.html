@@ -132,12 +132,6 @@ textarea{font:inherit;font-size:18px;width:100%;min-height:120px;border:3px soli
 .crumb{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:15px}
 @media (min-width:900px){body.wide-route .layout{grid-template-columns:minmax(0,1fr)}}
 .seg-now{font-weight:700;color:var(--accent-ink)}
-.hscroll:has(.qcard){align-items:flex-start}
-.qcard{width:380px}
-.qcard.now{width:460px}
-.qcard.later{width:220px;opacity:.6;justify-content:flex-start}
-.qcard.done{opacity:.85}
-.qcard h2{font-size:20px}
 .seg{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .hwrap{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center}
 .hscroll{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding:6px 2px 14px}
@@ -316,8 +310,6 @@ function glossBlock(...f){const ks=[];f.forEach(x=>(x||"").replace(/\[\[(.+?)\]\
 function qList(){const out=[];S.worries.forEach(w=>QOF[w].forEach(id=>{if(!out.includes(id))out.push(id)}));return out.filter(id=>!Q[id].if||Q[id].if(S.ans))}
 function routeOf(w){return ROUTES[w].filter(s=>!s.if||s.if(S.ans))}
 const RM=()=>!!(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-function pcSeg(){if(!(window.matchMedia&&window.matchMedia("(min-width:900px)").matches))return "";const L=S.pcLayout||"b";return `<div class="seg" role="group" aria-label="PCの並べ方（比較用）"><span class="small">PCの並べ方（比較用）：いまは <span class="seg-now">${L==="a"?"A 横スクロール":"B 全体図"}</span></span><button type="button" class="chip" aria-pressed="${L==="a"}" data-lay="a">A 横スクロール</button><button type="button" class="chip" aria-pressed="${L==="b"}" data-lay="b">B 全体図</button></div>`}
-function bindSeg(){document.querySelectorAll("[data-lay]").forEach(b=>b.onclick=()=>{S.pcLayout=b.dataset.lay;try{localStorage.setItem(KEY+"-lay",S.pcLayout)}catch(e){};render();cue(S.pcLayout==="a"?"A 横スクロール":"B 全体図","並べ方を切り替えました")})}
 const UNSURE=/わからない|まだ|足りない|相談|知らない|いない/;
 function selfSteps(all){return all.filter(x=>x.k!=="human")}
 function humanStep(all){return all.find(x=>x.k==="human")}
@@ -377,12 +369,10 @@ self(){
 },
 q(){
   const qs=qList();const total=qs.length+1;const i=S.qi;
-  const pcA=window.matchMedia&&window.matchMedia("(min-width:900px)").matches&&S.pcLayout==="a";
-  if(pcA)return V.qh(qs,total,i);
   const prog=`<div class="prog" aria-hidden="true">${Array.from({length:total},(_,k)=>`<i class="${k<=i?"on":""}"></i>`).join("")}</div>`;
   const err=S.err?`<p class="err" role="alert">${S.err}</p>`:"";
   if(i===0){
-    $("screen").innerHTML=`${pcSeg()}${prog}<p class="qno">はじめに（全部で${total}つ聞きます）</p>
+    $("screen").innerHTML=`${prog}<p class="qno">はじめに（全部で${total}つ聞きます）</p>
      <h1>いま、気になっていることは<br>どれですか？</h1>
      <p class="lead">いくつ選んでも大丈夫です。</p>${err}
      <div class="choice">${WORRIES.map(w=>{const k=S.worries.indexOf(w.id);return `<button type="button" class="opt" aria-pressed="${k>=0}" data-w="${w.id}"><span class="box">✓</span><span>${w.label}</span></button>`}).join("")}</div>
@@ -390,49 +380,17 @@ q(){
     document.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{const id=b.dataset.w;const k=S.worries.indexOf(id);k>=0?S.worries.splice(k,1):S.worries.push(id);S.err="";persist();V.q()});
   }else{
     const id=qs[i-1];const it=Q[id];const cur=S.ans[id];const pressed=a=>it.multi?has(cur,a):cur===a;
-    $("screen").innerHTML=`${pcSeg()}${prog}<p class="qno">質問 ${i} / ${qs.length}</p><h1>${it.q}</h1>${it.multi?'<p class="lead">いくつ選んでも大丈夫です。</p>':""}${err}
+    $("screen").innerHTML=`${prog}<p class="qno">質問 ${i} / ${qs.length}</p><h1>${it.q}</h1>${it.multi?'<p class="lead">いくつ選んでも大丈夫です。</p>':""}${err}
      <div class="choice">${it.a.map(a=>`<button type="button" class="opt ${it.multi?"":"round"}" aria-pressed="${pressed(a)}" data-a="${esc(a)}"><span class="box">${it.multi?"✓":"●"}</span><span>${a}</span></button>`).join("")}</div>
      <p class="small">分からないときは「わからない」を選んで大丈夫です。</p>`;
     document.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{const a=b.dataset.a;
       if(it.multi){let v=Array.isArray(S.ans[id])?S.ans[id].slice():[];v.includes(a)?v=v.filter(x=>x!==a):v.push(a);S.ans[id]=v}else S.ans[id]=a;S.err="";persist();V.q()});
   }
-  bindSeg();
   const last=i===total-1;
   bar([{id:"b",label:backLabel(),cls:"back",on:back},{id:"n",label:last?"答え終わった<small>次の画面で、やることをお伝えします</small>":`次へ<small>次は 質問 ${i+1} / ${qs.length}</small>`,cls:"primary",on:()=>{
     if(i===0&&!S.worries.length){S.err="1つ選んでください。";V.q();return}
     if(i>0){const v=S.ans[qs[i-1]];if(!v||(Array.isArray(v)&&!v.length)){S.err="1つ選んでください。「わからない」でも進めます。";V.q();return}}
     if(last){S.qi=total;show("summary")}else show("q",{qi:i+1})}}]);
-},
-qh(qs,total,i){
-  const err=S.err?`<p class="err" role="alert">${S.err}</p>`:"";
-  const seg=`<div class="seg" role="group" aria-label="PCの並べ方（比較用）"><span class="small">PCの並べ方（比較用）：いまは <span class="seg-now">A 横スクロール</span></span><button type="button" class="chip" aria-pressed="true" data-lay="a">A 横スクロール</button><button type="button" class="chip" aria-pressed="false" data-lay="b">B 全体図</button></div>`;
-  const cards=[];
-  for(let k=0;k<total;k++){
-    const st=k<i?"done":k===i?"now":"";
-    if(k>i){const t=k===0?"気になること":Q[qs[k-1]].q;cards.push(`<section class="hcard qcard later" id="qc${k}"><p class="small">${k===0?"はじめに":`質問 ${k} / ${qs.length}`}・このあと</p><b>${esc(t)}</b></section>`);continue}
-    if(k===0){cards.push(`<section class="hcard qcard ${st}" id="qc0"><p class="small">はじめに${st==="done"?"・答えました（選び直せます）":""}</p><h2>いま、気になっていることは<br>どれですか？</h2>${st==="now"?'<p class="small">いくつ選んでも大丈夫です。</p>'+err:""}
-      <div class="choice">${WORRIES.map(w=>`<button type="button" class="opt" aria-pressed="${S.worries.includes(w.id)}" data-w="${w.id}"><span class="box">✓</span><span>${w.label}</span></button>`).join("")}</div></section>`);continue}
-    const id=qs[k-1];const it=Q[id];const cur=S.ans[id];const pressed=a=>it.multi?has(cur,a):cur===a;
-    cards.push(`<section class="hcard qcard ${st}" id="qc${k}"><p class="small">質問 ${k} / ${qs.length}${st==="done"?"・答えました（選び直せます）":""}</p><h2>${it.q}</h2>${st==="now"?(it.multi?'<p class="small">いくつ選んでも大丈夫です。</p>':"")+err:""}
-      <div class="choice">${it.a.map(a=>`<button type="button" class="opt ${it.multi?"":"round"}" aria-pressed="${pressed(a)}" data-qid="${id}" data-a="${esc(a)}"><span class="box">${it.multi?"✓":"●"}</span><span>${a}</span></button>`).join("")}</div></section>`);
-  }
-  $("screen").innerHTML=`${seg}<p class="qno">${i===0?"はじめに":`質問 ${i} / ${qs.length}`}　<span class="small">答えたものは左に残ります。押せば選び直せます。</span></p>
-    <div class="hwrap"><button type="button" class="btn sm" id="hPrev" aria-label="左へ送る">← 前</button><div class="hscroll" id="hs" tabindex="0">${cards.join("")}</div><button type="button" class="btn sm" id="hNext" aria-label="右へ送る">次 →</button></div>`;
-  document.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{const id=b.dataset.w;const k=S.worries.indexOf(id);k>=0?S.worries.splice(k,1):S.worries.push(id);S.err="";persist();S._qs=$("hs").scrollLeft;render()});
-  document.querySelectorAll("[data-qid]").forEach(b=>b.onclick=()=>{const id=b.dataset.qid,a=b.dataset.a;
-    if(Q[id].multi){let v=Array.isArray(S.ans[id])?S.ans[id].slice():[];v.includes(a)?v=v.filter(x=>x!==a):v.push(a);S.ans[id]=v}else S.ans[id]=a;S.err="";persist();S._qs=$("hs").scrollLeft;render()});
-  document.querySelectorAll("[data-lay]").forEach(b=>b.onclick=()=>{S.pcLayout=b.dataset.lay;try{localStorage.setItem(KEY+"-lay",S.pcLayout)}catch(e){};render();cue(S.pcLayout==="a"?"A 横スクロール":"B 全体図","並べ方を切り替えました")});
-  const hsEl=$("hs");const nowEl=$("qc"+i);
-  hsEl.scrollLeft=S._qs!=null?S._qs:0;
-  if(S._qslide){S._qslide=false;const target=Math.max(0,nowEl.offsetLeft-hsEl.offsetLeft-24);setTimeout(()=>hsEl.scrollTo({left:target,behavior:RM()?"auto":"smooth"}),RM()?0:350)}
-  else if(S._qs==null)hsEl.scrollLeft=Math.max(0,nowEl.offsetLeft-hsEl.offsetLeft-24);
-  S._qs=null;
-  $("hPrev").onclick=()=>hsEl.scrollBy({left:-420,behavior:RM()?"auto":"smooth"});$("hNext").onclick=()=>hsEl.scrollBy({left:420,behavior:RM()?"auto":"smooth"});
-  const last=i===total-1;
-  bar([{id:"b",label:backLabel(),cls:"back",on:()=>{S._qs=hsEl.scrollLeft;if(i>0){S._qslide=true}back()}},{id:"n",label:last?"答え終わった<small>次の画面で、やることをお伝えします</small>":`次へ<small>次は 質問 ${i+1} / ${qs.length}（右へ進みます）</small>`,cls:"primary",on:()=>{
-    if(i===0&&!S.worries.length){S.err="1つ選んでください。";S._qs=hsEl.scrollLeft;render();return}
-    if(i>0){const v=S.ans[qs[i-1]];if(!v||(Array.isArray(v)&&!v.length)){S.err="1つ選んでください。「わからない」でも進めます。";S._qs=hsEl.scrollLeft;render();return}}
-    if(last){S.qi=total;show("summary")}else{S._qs=hsEl.scrollLeft;S._qslide=true;show("q",{qi:i+1})}}}]);
 },
 summary(){
   const w=S.worries[0];const r=routeOf(w);const self=r.filter(s=>s.k!=="human").length;
@@ -724,10 +682,10 @@ function sideFor(name){
 }
 const SUBFLOW={gather:"家族がそろう日を決める",plan:"家族がそろう日の計画",handoff:"旅行の予約に引き継ぐ",invite:"家族を誘う"};
 function crumb(){if(!SUBFLOW[S.screen]||!S.worries.length)return;$("screen").insertAdjacentHTML("afterbegin",`<nav class="crumb" aria-label="いまいる場所"><span>やること ＞ <b>${SUBFLOW[S.screen]}</b></span><button type="button" class="btn sm" id="crumbBack">やることに戻る</button></nav>`);$("crumbBack").onclick=()=>show("route")}
-function render(){side("");(V[S.screen]||V.home)();crumb();side(S.screen==="route"||(S.screen==="q"&&S.pcLayout==="a"&&window.matchMedia&&window.matchMedia("(min-width:900px)").matches)?"":sideFor(S.screen));document.body.classList.toggle("wide-route",S.screen==="route"||(S.screen==="q"&&S.pcLayout==="a"));if($("sideBook"))$("sideBook").onclick=()=>show("book");if($("sideTogether"))$("sideTogether").onclick=()=>show("together");}
+function render(){side("");(V[S.screen]||V.home)();crumb();side(S.screen==="route"?"":sideFor(S.screen));document.body.classList.toggle("wide-route",S.screen==="route");if($("sideBook"))$("sideBook").onclick=()=>show("book");if($("sideTogether"))$("sideTogether").onclick=()=>show("together");}
 $("ov").onclick=()=>{$("ov").hidden=true};
 try{S.pcLayout=localStorage.getItem(KEY+"-lay")||"b"}catch(e){S.pcLayout="b"}
-if(window.matchMedia){const mq=window.matchMedia("(min-width:900px)");const rr=()=>{if(S.screen==="route"||S.screen==="q")render()};mq.addEventListener?mq.addEventListener("change",rr):mq.addListener&&mq.addListener(rr)}
+if(window.matchMedia){const mq=window.matchMedia("(min-width:900px)");const rr=()=>{if(S.screen==="route")render()};mq.addEventListener?mq.addEventListener("change",rr):mq.addListener&&mq.addListener(rr)}
 $("askBtn").onclick=()=>{if(S.screen!=="book")show("book")};
 render();
 </script>
